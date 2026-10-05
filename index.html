@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--
+  SF DAY GUIDE (Google Maps edition)
+
+  To switch on the Google map:
+  1. In Google Cloud Console, create a project and attach a billing account (Google gives a monthly free credit).
+  2. Enable "Maps JavaScript API" and "Directions API".
+  3. Create an API key, then restrict it: Application restrictions -> Websites, and add your site (for example https://yourname.github.io/*).
+  4. Paste the key into CONFIG.googleMapsApiKey below, or paste it into the box on the Map and route tab (it is saved on that device only).
+  With no key, the page still works and shows a built-in schematic map.
+-->
+<title>SF day guide: records, beer, house music</title>
+<meta name="description" content="A San Francisco day planner for record shops, breweries, house music and art. Pick stops, compare routes and see hours.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SF day guide: records, beer, house music">
+<meta property="og:description" content="Pick stops, compare route orders and see real opening hours across San Francisco.">
+<meta name="theme-color" content="#E8ECF1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1117" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SF day guide">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E8ECF1;
+    --card: #F7F9FB;
+    --ink: #11151C;
+    --muted: #566070;
+    --line: #CBD2DB;
+    --accent: #2B3FFF;
+    --accent-ink: #FFFFFF;
+    --warn: #B8400A;
+    --warn-bg: #FBE6DA;
+    --water: #CFDCEC;
+    --land: #F4F6F8;
+    --park: #CDE2D2;
+    --street: #D3DAE3;
+    --display: "Bricolage Grotesque", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1117; --card: #171B24; --ink: #EAEFF5; --muted: #9BA5B4; --line: #2A3140;
+      --accent: #7C8CFF; --accent-ink: #0E1117; --warn: #FF9A62; --warn-bg: #3A2418;
+      --water: #121A29; --land: #1C2331; --park: #1F3A2B; --street: #2B3446;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1117; --card: #171B24; --ink: #EAEFF5; --muted: #9BA5B4; --line: #2A3140;
+    --accent: #7C8CFF; --accent-ink: #0E1117; --warn: #FF9A62; --warn-bg: #3A2418;
+    --water: #121A29; --land: #1C2331; --park: #1F3A2B; --street: #2B3446;
+  }
+  html { height: 100%; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 120px); -webkit-text-size-adjust: 100%; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 18px 48px; }
+
+  .hero { padding: 28px 0 8px; }
+  .hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.3rem, 9vw, 3.4rem); line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 12px; }
+  .hero p { margin: 0; color: var(--muted); max-width: 46ch; }
+  .record-wrap { display: flex; justify-content: center; padding: 26px 0 10px; }
+  .record {
+    position: relative; width: 224px; height: 224px; border-radius: 50%;
+    background:
+      conic-gradient(from 30deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 18%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 68%, rgba(255,255,255,0.10)),
+      repeating-radial-gradient(circle at center, #0A0C11 0 2px, #171B25 2px 4px);
+    box-shadow: 0 0 0 1px var(--line); display: grid; place-items: center;
+  }
+  .record .label { position: relative; width: 104px; height: 104px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 0 3px rgba(0,0,0,0.25); }
+  .record .label::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #0A0C11; }
+  .label .amt { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: 1; letter-spacing: -0.02em; margin-bottom: 18px; }
+  .label .sub { position: absolute; bottom: 24px; font-size: 0.68rem; font-weight: 500; line-height: 1.15; opacity: 0.9; }
+
+  .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 18px; border-bottom: 1px solid var(--line); margin: 0 -18px; }
+  .sum { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 0.95rem; }
+  .sum strong { font-weight: 600; }
+  .linkbtn { font: inherit; font-size: 0.9rem; color: var(--muted); background: none; border: 0; padding: 6px 4px; cursor: pointer; text-decoration: underline; }
+  .tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 3px; margin-bottom: 8px; }
+  .tab { flex: 1; font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 9px; padding: 8px 10px; cursor: pointer; }
+  .tab[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: 0 0 auto; font: inherit; font-size: 0.92rem; font-weight: 500; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  section { padding-top: 26px; }
+  section[hidden], [hidden] { display: none !important; }
+  section h2 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .section-note { margin: 0 0 12px; color: var(--muted); font-size: 0.92rem; }
+  ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 12px; }
+  .card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .card h3 { font-family: var(--display); font-weight: 700; font-size: 1.12rem; line-height: 1.2; margin: 0; }
+  .where { color: var(--muted); font-size: 0.88rem; margin: 2px 0 0; }
+  .blurb { margin: 8px 0 10px; font-size: 0.97rem; }
+  .meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 10px; font-size: 0.9rem; }
+  .meta dt { color: var(--muted); }
+  .meta dd { margin: 0; }
+  .status { display: inline-block; font-size: 0.82rem; border-radius: 6px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+  .status.closed { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+  .add { font: inherit; font-size: 0.92rem; font-weight: 600; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+  .add[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+  /* Route view */
+  .rv { padding-top: 18px; }
+  .rv h2 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; margin: 0 0 4px; }
+  .rv h3 { font-family: var(--display); font-weight: 700; font-size: 1.15rem; margin: 22px 0 8px; }
+  .hint { color: var(--muted); font-size: 0.9rem; margin: 0 0 10px; }
+  .empty { background: var(--card); border: 1px dashed var(--line); border-radius: 14px; padding: 22px 16px; text-align: center; }
+  .empty p { margin: 0 0 12px; }
+  .btn { font: inherit; font-size: 0.93rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn.small { padding: 6px 11px; font-size: 0.86rem; }
+  .maptools { display: flex; gap: 8px; margin-bottom: 8px; }
+  .map-box svg { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--water); }
+  .sea { fill: var(--water); }
+  .land { fill: var(--land); stroke: var(--line); stroke-width: 1; }
+  .park { fill: var(--park); }
+  .stmkt { stroke: var(--street); fill: none; stroke-linecap: round; }
+  .nb { fill: var(--muted); opacity: 0.8; font-family: var(--body); }
+  .pin-n { fill: var(--accent-ink); font-family: var(--display); font-weight: 800; text-anchor: middle; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--accent); }
+  .sw.dash { border-top: 3px dashed var(--ink); }
+  .sw.dot { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--muted); opacity: 0.7; }
+  .sw.warn { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--warn); }
+
+  details.set { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px 14px 14px; margin-top: 16px; }
+  details.set summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+  .field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin-top: 10px; font-size: 0.93rem; min-width: 0; }
+  .field label { color: var(--muted); }
+  .field select, .field input[type="time"] { font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); height: 44px; width: 100%; min-width: 0; max-width: 100%; display: block; -webkit-appearance: none; appearance: none; text-align: left; }
+  .field select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 19px, calc(100% - 14px) 19px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 34px; }
+  .field input[type="time"]::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
+  .field input[type="time"]::-webkit-datetime-edit { padding: 0; }
+  .field input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px; }
+  .seg { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .seg button { flex: 1; font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 8px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .check { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.93rem; }
+  .check input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+  .cmp { display: grid; gap: 10px; }
+  .opt { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .opt.rec { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .opt h4 { font-family: var(--display); font-size: 1.02rem; margin: 0 0 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .tag { font-size: 0.74rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 2px 7px; font-family: var(--body); }
+  .opt .nums { font-size: 0.95rem; margin: 2px 0; }
+  .opt .seq { font-size: 0.85rem; color: var(--muted); margin: 4px 0 8px; }
+  .opt .ok { font-size: 0.85rem; color: var(--muted); margin: 0 0 8px; }
+  .opt .bad { font-size: 0.85rem; color: var(--warn); margin: 0 0 8px; }
+
+  ol.tl { list-style: none; margin: 0; padding: 0; }
+  .legrow { margin: 0 0 6px 17px; padding-left: 14px; border-left: 3px solid var(--accent); font-size: 0.86rem; color: var(--muted); min-height: 28px; display: flex; align-items: center; }
+  .legrow.muni { border-left-style: dashed; border-left-color: var(--ink); }
+  .tl li { position: relative; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .tl li.dragging { z-index: 20; transition: none; }
+  .stoprow { position: relative; display: grid; grid-template-columns: 36px 1fr; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 6px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+  .stoprow.flash { box-shadow: 0 0 0 2px var(--accent); }
+  .stoprow.pressing { transform: scale(0.985); }
+  .stoprow.lifted { transform: scale(1.025); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3); border-color: var(--accent); }
+  .grip { position: absolute; right: 12px; top: 14px; width: 12px; height: 18px; background-image: radial-gradient(circle, var(--muted) 1.5px, transparent 2px); background-size: 6px 6px; opacity: 0.55; pointer-events: none; }
+  .stoprow h4 { padding-right: 24px; }
+  body.is-dragging, body.is-dragging * { cursor: grabbing; }
+  @media (prefers-reduced-motion: reduce) { .tl li, .stoprow { transition: none; } }
+  .badge { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-family: var(--display); font-weight: 800; }
+  .badge.bad { background: var(--warn); }
+  .stoprow h4 { font-family: var(--display); font-size: 1.05rem; margin: 0; line-height: 1.2; }
+  .stoprow p { margin: 3px 0 0; font-size: 0.9rem; }
+  .stoprow .muted { color: var(--muted); }
+  .stoprow .issue { color: var(--warn); font-weight: 500; }
+  .ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+
+  .totals { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 14px; }
+  .totals p { margin: 0 0 6px; font-size: 0.95rem; }
+  .totals .big { font-family: var(--display); font-weight: 800; font-size: 1.4rem; margin-bottom: 8px; }
+  .totals .fine { color: var(--muted); font-size: 0.84rem; }
+
+
+  /* Full-screen map */
+  .mapfs { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .mapfs-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+  .mapfs-top strong { font-family: var(--display); font-size: 1.1rem; }
+  .mapfs-body { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #fsMap { position: absolute; inset: 0; touch-action: none; -webkit-user-select: none; user-select: none; cursor: grab; }
+  #fsMap svg { display: block; width: 100%; height: 100%; border: 0; border-radius: 0; background: var(--water); }
+  .mapfs-ctl { position: absolute; right: 12px; top: 12px; display: grid; gap: 8px; z-index: 2; }
+  .mapfs-ctl button { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 700 1.05rem var(--body); cursor: pointer; }
+  .mapfs-legend { position: absolute; left: 12px; top: 12px; z-index: 2; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; display: grid; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+  .mapfs-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sheet { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 3; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+  .sheet h3 { font-family: var(--display); font-size: 1.1rem; margin: 0 0 4px; }
+  .sheet p { margin: 2px 0; font-size: 0.92rem; }
+  .sheet .muted { color: var(--muted); }
+  .sheet .issue { color: var(--warn); font-weight: 500; }
+  .sheet .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+
+  /* Day bar, banners, toast */
+  .daybar { margin-top: 18px; }
+  .daybar .lbl, .field .lbl { display: block; color: var(--muted); font-size: 0.88rem; margin-bottom: 6px; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 80; max-width: 88vw; text-align: center; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .keybox { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+  .keybox strong { font-family: var(--display); font-size: 1.05rem; }
+  .keybox p { margin: 4px 0 10px; font-size: 0.9rem; color: var(--muted); }
+  .keyrow { display: flex; gap: 8px; }
+  .keyrow input { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; padding: 9px 12px; height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .keybox .err { color: var(--warn); margin: 8px 0 0; }
+  .footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.88rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between; }
+  .footer a { color: var(--ink); }
+
+  /* Google map */
+  #gmap { width: 100%; height: min(62vh, 480px); border-radius: 14px; border: 1px solid var(--line); background: var(--water); overflow: hidden; }
+  #fsGoogle { position: absolute; inset: 0; }
+  #fsGoogle #gmap { height: 100%; border-radius: 0; border: 0; }
+  .mapfs.google #fsMap, .mapfs.google #fsIn, .mapfs.google #fsOut { display: none; }
+  .mapfs:not(.google) #fsGoogle { display: none; }
+  .gmk { position: absolute; transform: translate(-50%, -50%); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .gmk.pin { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); border: 2.5px solid #fff; display: grid; place-items: center; font: 800 13px var(--display); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+  .gmk.pin.bad { background: var(--warn); }
+  .gmk.start { width: 26px; height: 26px; border-radius: 7px; background: #11151C; color: #fff; border: 2.5px solid #fff; display: grid; place-items: center; font: 800 12px var(--display); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+  .gmk.dot { width: 28px; height: 28px; }
+  .gmk.dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 11px; border-radius: 50%; background: #6B7585; border: 2px solid #fff; transform: translate(-50%, -50%); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
+  .btn.row2 { display: inline-block; margin-right: 8px; }
+
+  .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+  .cheat h2 { font-family: var(--display); font-size: 1.3rem; margin: 0 0 8px; }
+  .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
+  .fine { margin: 18px 0 0; color: var(--muted); font-size: 0.85rem; }
+
+  button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>Your San Francisco day</h1>
+    <p>Record shops, breweries, house music and art within reach of Civic Center. Add the stops you want, then open Map and route to compare the order that works best.</p>
+    <div class="daybar"><span class="lbl" id="dayLbl">Plan for</span><div class="chips" id="dayChips" role="group" aria-labelledby="dayLbl"></div></div>
+    <div class="record-wrap">
+      <div class="record" role="img" aria-label="A vinyl record whose label shows your running cost estimate">
+        <div class="label"><span class="amt" id="recAmt">$0</span><span class="sub">est. day</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="sum"><span id="sumText"><strong>Nothing added yet</strong></span><button class="linkbtn" id="clear" type="button">Clear</button></div>
+    <div class="tabs" role="group" aria-label="View">
+      <button class="tab" id="tabStops" type="button" aria-pressed="true">Pick stops</button>
+      <button class="tab" id="tabRoute" type="button" aria-pressed="false">Map and route</button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+  </div>
+
+  <main id="main"></main>
+
+  <div class="rv" id="routeView" hidden>
+    <h2>Map and route</h2>
+    <p class="hint" id="hoursHint">Tap Expand map to pan, zoom and tap pins.</p>
+
+    <div class="empty" id="routeEmpty">
+      <p>Add at least one stop to see it on the map.</p>
+      <button class="btn" type="button" id="goStops">Pick stops</button>
+    </div>
+
+    <div id="routeBody" hidden>
+      <div class="keybox" id="keyBox" hidden>
+        <strong>Switch on the Google map</strong>
+        <p>Paste a Google Maps API key to draw the route on Google Maps with real street paths and live travel times. It stays on this device. Until then you get the built-in map.</p>
+        <div class="keyrow"><input id="keyInput" type="text" placeholder="Google Maps API key" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Google Maps API key"><button class="btn small" type="button" id="keySave">Save</button></div>
+        <p class="err" id="keyMsg" hidden></p>
+      </div>
+      <div class="maptools">
+        <button class="btn small" type="button" id="expandMap">Expand map</button>
+        <button class="btn ghost small" type="button" id="zoomFit">Fit my route</button>
+        <button class="btn ghost small" type="button" id="zoomCity">Whole city</button>
+      </div>
+      <div class="map-box" id="mapBox"></div>
+      <div class="legend">
+        <span><i class="sw"></i>Walk</span>
+        <span><i class="sw dash"></i>Muni</span>
+        <span><i class="sw warn"></i>Timing problem</span>
+        <span><i class="sw dot"></i>Tap a gray dot to add it</span>
+      </div>
+
+      <details class="set" open>
+        <summary>Route settings</summary>
+        <div class="field"><span class="lbl" id="dayLbl2">Day</span><div class="chips" id="dayChips2" role="group" aria-labelledby="dayLbl2"></div></div>
+        <div class="field">
+          <label for="startSel">Start from</label>
+          <select id="startSel"></select>
+        </div>
+        <div class="field">
+          <label for="startTime">Start time</label>
+          <input type="time" id="startTime" value="12:00">
+        </div>
+        <div class="field">
+          <label id="modeLbl">Getting around</label>
+          <div class="seg" role="group" aria-labelledby="modeLbl">
+            <button type="button" id="modeAuto" aria-pressed="true">Walk and Muni</button>
+            <button type="button" id="modeWalk" aria-pressed="false">Walk only</button>
+          </div>
+        </div>
+        <div class="field" id="limitField">
+          <label for="walkLimit" id="walkLimitLbl">Walk up to 0.8 mi per leg</label>
+          <input type="range" id="walkLimit" min="0.3" max="2" step="0.1" value="0.8">
+        </div>
+        <label class="check"><input type="checkbox" id="loopChk"> End back at the start</label>
+      </details>
+
+      <h3>Compare orders</h3>
+      <p class="hint">Fastest and cheapest are searched for you. Closed stops and missed opening hours count against an order.</p>
+      <div class="cmp" id="cmp"></div>
+
+      <h3>Your route</h3>
+      <p class="hint">Press and hold a stop, then drag it up or down to reorder.</p>
+      <ol class="tl" id="timeline"></ol>
+      <div class="totals" id="totals"></div>
+    </div>
+  </div>
+
+  <aside class="cheat" aria-labelledby="cheat-h">
+    <h2 id="cheat-h">Getting around and paying</h2>
+    <ul>
+      <li>Muni is about $2.75 a ride when you tap a contactless card or Clipper, or $3 in cash. Confirm the current fare on sfmta.com.</li>
+      <li>A cable car ride is $8 one way. A 1-day Visitor Passport is about $14 and covers cable cars, so it pays off after roughly five rides.</li>
+      <li>Muni stopped selling single-ride tickets in its app on Sep 1. Tap a card or use Clipper.</li>
+      <li>Alcatraz tickets sell out weeks ahead. Buy only from the official Alcatraz City Cruises site, because resellers add fees.</li>
+      <li>Asian Art Museum is free on the first Sunday of each month, and the next one is Nov 1.</li>
+    </ul>
+    <p class="fine">Costs are estimates. Club covers and anything marked "check" are not included in totals. Hours shown are for the day you pick, and the route planner uses them. Confirm hours before you go.</p>
+  </aside>
+  <footer class="footer"><span id="credit"></span><span><a href="#" id="resetKey" hidden>Remove saved Google key</a></span></footer>
+</div>
+
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="mapfs" id="mapFs" role="dialog" aria-modal="true" aria-label="Interactive route map" hidden>
+  <div class="mapfs-top"><strong>Route map</strong><button class="btn small" type="button" id="fsDone">Done</button></div>
+  <div class="mapfs-body">
+    <div id="fsMap"></div>
+    <div id="fsGoogle"></div>
+    <div class="mapfs-legend" aria-hidden="true">
+      <span><i class="sw"></i>Walk</span>
+      <span><i class="sw dash"></i>Muni</span>
+      <span><i class="sw warn"></i>Timing problem</span>
+    </div>
+    <div class="mapfs-ctl">
+      <button type="button" id="fsIn" aria-label="Zoom in">+</button>
+      <button type="button" id="fsOut" aria-label="Zoom out">-</button>
+      <button type="button" id="fsFit" aria-label="Fit my route">Fit</button>
+      <button type="button" id="fsCity" aria-label="Show the whole city">City</button>
+    </div>
+    <div class="sheet" id="fsSheet" hidden></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CONFIG = {
+    googleMapsApiKey: "",   // paste a key here, or use the box on the Map and route tab
+    credit: { text: "Designed and built by Joaquin", url: "https://joaquinboehmer.framer.website" }
+  };
+  var FARE = 2.75, STREET = 1.3, WALK_MIN_PER_MI = 20, TRANSFER_MIN = 90;
+  var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var DAYS_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  function tm(h, m) { return h * 60 + (m || 0); }
+
+  var CATS = [
+    { id: "records", label: "Records", note: "Browsing is free. Used LPs are often $5-25 and new 12-inches $20-35 (my estimate)." },
+    { id: "beer", label: "Bars and beer", note: "Costs below assume one drink each." },
+    { id: "food", label: "Coffee and quick eats", note: "Rough costs for a coffee, a pastry or a quick meal." },
+    { id: "music", label: "House music", note: "Cover varies, so it is not in the tally. One Halcyon reviewer paid $50." },
+    { id: "art", label: "Art", note: "Museums, design and street murals. Check each status line for that day." },
+    { id: "museums", label: "Museums and oddities", note: "Status lines show hours for the day you picked." },
+    { id: "sights", label: "Sights", note: "" }
+  ];
+
+  var STARTS = [
+    { id: "civic", label: "Civic Center (Asian Art Museum)", lat: 37.7802, lng: -122.4160, q: "Asian Art Museum, San Francisco, CA" },
+    { id: "powell", label: "Powell St / Union Square", lat: 37.7845, lng: -122.4079, q: "Powell St BART Station, San Francisco, CA" },
+    { id: "ferry", label: "Ferry Building", lat: 37.7954, lng: -122.3936, q: "Ferry Building, San Francisco, CA" },
+    { id: "mission", label: "16th St Mission BART", lat: 37.7651, lng: -122.4196, q: "16th St Mission BART Station, San Francisco, CA" }
+  ];
+
+  var N = null, ALL = "24";
+  function R(v) { return [v, v, v, v, v, v, v]; }
+  // hrs: Monday..Sunday. null = closed, "24" = open all day, [open, close] in hours (close past 24 means after midnight).
+  var ITEMS = [
+    { id: "dark-entries", cat: "records", name: "Dark Entries Records", where: "Larkin St, Tenderloin", blurb: "Techno, synth and rare finds with listening stations.", entry: 0, entryLabel: "Free to browse", transitLabel: "10 min walk", lat: 37.78635, lng: -122.41799, dwell: 30, q: "Dark Entries Records, 910 Larkin St, San Francisco, CA", hrs: [[13,18],[10,18],[12,16],[13,18],[13,18],[13,18],[11,18]] },
+    { id: "grooves", cat: "records", name: "Grooves", where: "Market St near Octavia", blurb: "Used vinyl with a deep jazz, rock and world selection.", entry: 0, entryLabel: "Free to browse", transitLabel: "15-20 min walk, or Muni $2.75", lat: 37.77141, lng: -122.42352, dwell: 30, q: "Grooves Records, 1797 Market St, San Francisco, CA", hrs: R([12,19]) },
+    { id: "vinyl-dreams", cat: "records", name: "Vinyl Dreams", where: "Haight St", blurb: "The electronic record shop: house, techno, trance and more.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni $2.75 each way", lat: 37.77182, lng: -122.43184, dwell: 40, q: "Vinyl Dreams, 593 Haight St, San Francisco, CA", hrs: [[13,18],[12,17],N,[13,18],[13,18],[13,18],[13,18]] },
+    { id: "stranded", cat: "records", name: "Stranded Records", where: "Valencia St, Mission", blurb: "New and used, clean and well organized.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni $2.75 each way", lat: 37.75605, lng: -122.42086, dwell: 30, q: "Stranded Records, 1055 Valencia St, San Francisco, CA", hrs: R([11,19]) },
+    { id: "noise", cat: "records", name: "Noise", where: "Balboa St, Outer Richmond", blurb: "Record shop and gallery. Reviewers rave about its minimal house.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni $2.75 each way, about 45 min", lat: 37.77560, lng: -122.49574, dwell: 30, q: "Noise, 3427 Balboa St, San Francisco, CA", hrs: R([12,15]) },
+    { id: "amoeba", cat: "records", name: "Amoeba Music", where: "Haight St", blurb: "The big one: a huge new and used selection.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni $2.75 each way", lat: 37.76919, lng: -122.45267, dwell: 60, q: "Amoeba Music, 1855 Haight St, San Francisco, CA", hrs: R([11,19]) },
+    { id: "enterprise", cat: "beer", name: "Enterprise Brewing", where: "Howard St, SoMa", blurb: "A small brewery that plays vinyl behind the bar.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "10 min walk", lat: 37.77723, lng: -122.41081, dwell: 45, q: "Enterprise Brewing Co, 1150 Howard St, San Francisco, CA", hrs: [N,[16,21],[16,21],[16,21],[15,22],[13,22],[11,16]] },
+    { id: "barebottle", cat: "beer", name: "Barebottle Brewing", where: "Cortland Ave, Bernal Heights", blurb: "Warehouse taproom with arcade games and a patio.", entry: 9, entryLabel: "$8-10 a pint per a recent reviewer", transitLabel: "Muni $2.75 each way", lat: 37.73986, lng: -122.40912, dwell: 45, q: "Barebottle Brewing Company, 1525 Cortland Ave, San Francisco, CA", hrs: [[12,21],[12,22],[12,22],[12,22],[12,23],[12,23],[12,21]] },
+    { id: "humble-sea", cat: "beer", name: "Humble Sea Brewing", where: "Pier 39", blurb: "Hazy IPAs and lagers with bay views.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "Muni $2.75 each way, or cable car $8", lat: 37.81024, lng: -122.41030, dwell: 45, q: "Humble Sea Brewing Co, Pier 39, San Francisco, CA", hrs: [[12,21],[12,21],[12,21],[12,21],[11,21],[11,21],[11,21]] },
+    { id: "sf-brewing", cat: "beer", name: "San Francisco Brewing Co.", where: "Hooper St, Dogpatch", blurb: "A newer taproom with a big space and food.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76897, lng: -122.39859, dwell: 45, q: "San Francisco Brewing Co, 100 Hooper St, San Francisco, CA", hrs: [N,[12,20],[12,20],[12,21],[12,22],[12,22],[12,20]] },
+    { id: "two-pitchers", cat: "beer", name: "Two Pitchers Brewing", where: "Noriega St, near Ocean Beach", blurb: "Cheap pints and smash burgers. A reviewer says pints start at $3.", entry: 6, entryLabel: "Pints from about $3 per a reviewer; budgeting $6", transitLabel: "Muni $2.75 each way, a long ride", lat: 37.75275, lng: -122.50488, dwell: 45, q: "Two Pitchers Brewing Company, 3821 Noriega St, San Francisco, CA", hrs: [N,N,[16,22],[16,22],[16,23],[12,23],[12,21]] },
+    { id: "public-works", cat: "music", name: "Public Works", where: "Erie St, Mission", blurb: "A two-floor electronic music club known for its sound system.", entry: null, entryLabel: "Cover varies. Check the lineup", transitLabel: "15 min walk", lat: 37.76892, lng: -122.41942, dwell: 90, q: "Public Works, 161 Erie St, San Francisco, CA", hrs: null, noHours: "Hours not listed. Check the lineup" },
+    { id: "f8", cat: "music", name: "F8", where: "Folsom St, SoMa", blurb: "Underground house and techno. A review mentions a Wednesday house night, so verify.", entry: null, entryLabel: "Cover varies", transitLabel: "10 min walk", lat: 37.77527, lng: -122.41004, dwell: 90, q: "F8 Nightclub, 1192 Folsom St, San Francisco, CA", hrs: [N,[21,26],[21,26],[21,26],[21,26],[21,26],[22,26]] },
+    { id: "underground", cat: "music", name: "Underground SF", where: "Haight St", blurb: "A coffee shop by day with DJ nights Thursday to Saturday.", entry: null, entryLabel: "Coffee about $5. DJ nights: check cover", transitLabel: "Muni $2.75 each way", lat: 37.77247, lng: -122.42939, dwell: 30, q: "Underground SF, 424 Haight St, San Francisco, CA", hrs: [[7,13],[7,13],[7,13],[7,13],[7,13],[10,15],N], note: "DJ nights Thu-Sat from 9pm" },
+    { id: "asian-art", cat: "art", name: "Asian Art Museum", where: "Larkin St, Civic Center", blurb: "You are next door. About 18,000 objects.", entry: 20, entryLabel: "About $20 adult (2025 price). Free first Sunday", transitLabel: "Next door", lat: 37.78018, lng: -122.41609, dwell: 90, q: "Asian Art Museum, San Francisco, CA", hrs: R([10,17]), assumed: true },
+    { id: "sfmoma", cat: "art", name: "SFMOMA", where: "3rd St, SoMa", blurb: "Modern and contemporary art across seven floors.", entry: 30, entryLabel: "$30 ages 25-64. $23 ages 19-24", transitLabel: "Muni $2.75 each way, or a 25 min walk", lat: 37.7859, lng: -122.4008, dwell: 90, q: "SFMOMA, 151 3rd St, San Francisco, CA", hrs: [[10,17],[10,17],N,[12,20],[10,17],[10,17],[10,17]] },
+    { id: "deyoung", cat: "art", name: "de Young Museum", where: "Golden Gate Park", blurb: "Textiles, American and contemporary art. The Hamon Tower view is free.", entry: 20, entryLabel: "About $20. May be free tomorrow (first Tuesday), so verify", transitLabel: "Muni $2.75 each way", lat: 37.77147, lng: -122.46868, dwell: 90, q: "de Young Museum, 50 Hagiwara Tea Garden Dr, San Francisco, CA", hrs: [N,[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25]] },
+    { id: "legion", cat: "art", name: "Legion of Honor", where: "Lincoln Park", blurb: "European art with bay views. Same-day entry comes with your de Young ticket.", entry: 0, entryLabel: "Included with de Young ticket", transitLabel: "Muni $2.75 each way", lat: 37.78447, lng: -122.50084, dwell: 75, q: "Legion of Honor, 100 34th Ave, San Francisco, CA", hrs: [N,[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25]] },
+    { id: "craft-design", cat: "art", name: "Museum of Craft and Design", where: "Third St, Dogpatch", blurb: "A small, design-focused museum.", entry: 10, entryLabel: "$10 ($8 student, per a reviewer). Free first Thursdays", transitLabel: "Muni $2.75 each way", lat: 37.75684, lng: -122.38779, dwell: 45, q: "Museum of Craft and Design, 2569 3rd St, San Francisco, CA", hrs: [N,N,N,[12,17],[12,17],[12,17],[12,17]] },
+    { id: "clarion", cat: "art", name: "Clarion Alley murals", where: "Mission", blurb: "An open-air mural alley. Pairs well with Stranded Records.", entry: 0, entryLabel: "Free", transitLabel: "Muni $2.75 each way", lat: 37.76310, lng: -122.41965, dwell: 20, q: "Clarion Alley, San Francisco, CA", hrs: R(ALL) },
+    { id: "cypress-murals", cat: "art", name: "Cypress Street murals", where: "Mission, near 24th St", blurb: "Alley murals a few blocks from Balmy Alley. The work keeps changing.", entry: 0, entryLabel: "Free", transitLabel: "Muni or BART, about $3 each way", lat: 37.75229, lng: -122.41685, dwell: 20, q: "Cypress St, San Francisco, CA 94110", hrs: R(ALL) },
+    { id: "folsom-mural", cat: "art", name: "Sielbeck mural", where: "Folsom St at 23rd, Mission", blurb: "A bright mural tribute to the neighborhood.", entry: 0, entryLabel: "Free", transitLabel: "Muni or BART, about $3 each way", lat: 37.75371, lng: -122.41441, dwell: 10, q: "2722 Folsom St, San Francisco, CA", hrs: R(ALL) },
+    { id: "journey-west", cat: "art", name: "Journey to the West mural", where: "Sacramento St, Chinatown", blurb: "A colorful Monkey King mural, with more street art nearby.", entry: 0, entryLabel: "Free", transitLabel: "Muni $2.75 each way", lat: 37.79338, lng: -122.40594, dwell: 15, q: "790 Sacramento St, San Francisco, CA", hrs: R(ALL) },
+    { id: "exploratorium", cat: "museums", name: "Exploratorium", where: "Pier 15", blurb: "Hands-on science and perception exhibits.", entry: 40, entryLabel: "About $40 adult (March listing)", transitLabel: "Muni $2.75 each way", lat: 37.80166, lng: -122.39735, dwell: 120, q: "Exploratorium, Pier 15, San Francisco, CA", hrs: [N,[10,17],[10,17],[10,17],[10,17],[10,17],[12,17]], note: "Also open Thu 6-10pm" },
+    { id: "cable-car-museum", cat: "museums", name: "Cable Car Museum", where: "Nob Hill", blurb: "The working winding room that pulls the city's cable cars.", entry: 0, entryLabel: "Free", transitLabel: "Muni $2.75 each way", lat: 37.79464, lng: -122.41151, dwell: 30, q: "Cable Car Museum, 1201 Mason St, San Francisco, CA", hrs: [N,[10,16],[10,16],[10,16],[10,17],[10,17],[10,17]] },
+    { id: "musee-mecanique", cat: "museums", name: "Mus\u00e9e M\u00e9canique", where: "Pier 45", blurb: "A vintage coin-operated arcade.", entry: 0, entryLabel: "Free entry. Games cost quarters", transitLabel: "Muni $2.75 each way", lat: 37.80930, lng: -122.41597, dwell: 30, q: "Mus\u00e9e M\u00e9canique, Pier 45, San Francisco, CA", hrs: R([10,20]) },
+    { id: "painted-ladies", cat: "sights", name: "Painted Ladies and Alamo Square", where: "Alamo Square", blurb: "A Victorian row with a skyline view. Good at sunset.", entry: 0, entryLabel: "Free", transitLabel: "20 min walk, or Muni $2.75", lat: 37.77625, lng: -122.43276, dwell: 20, q: "Painted Ladies, Steiner St, San Francisco, CA", hrs: R(ALL) },
+    { id: "ggp", cat: "sights", name: "Golden Gate Park", where: "Richmond and Sunset", blurb: "Conservatory of Flowers, Japanese Tea Garden and miles of paths.", entry: 0, entryLabel: "Free to enter. Some gardens charge", transitLabel: "Muni $2.75 each way", lat: 37.7726, lng: -122.4602, dwell: 60, q: "Conservatory of Flowers, San Francisco, CA", hrs: R(ALL) },
+    { id: "dolores", cat: "sights", name: "Dolores Park", where: "Mission", blurb: "Grab a drink and people-watch.", entry: 0, entryLabel: "Free", transitLabel: "Muni $2.75 each way", lat: 37.76020, lng: -122.42680, dwell: 30, q: "Mission Dolores Park, San Francisco, CA", hrs: R([6,22]) },
+    { id: "ferry-building", cat: "sights", name: "Ferry Building and the Embarcadero", where: "Embarcadero", blurb: "A waterfront walk with food stalls.", entry: 0, entryLabel: "Free", transitLabel: "Muni or BART, about $3 each way", lat: 37.79544, lng: -122.39361, dwell: 45, q: "Ferry Building, San Francisco, CA", hrs: R([6,22]) },
+    { id: "alcatraz", cat: "sights", name: "Alcatraz Day Tour", where: "Pier 33", blurb: "Ferry, island admission and the cellhouse audio guide.", entry: 47.95, entryLabel: "$47.95 adult. Night Tour $59.65", transitLabel: "Muni F line, or a walk along the waterfront", lat: 37.8087, lng: -122.4101, dwell: 180, q: "Alcatraz City Cruises, Pier 33, San Francisco, CA", hrs: R([8.75,15.8333]), note: "Sells out weeks ahead. Buy on the official site only", closeMsg: "The last day ferry has left (about 3:50pm)" },
+    { id: "standard-deviant", cat: "beer", name: "Standard Deviant Brewing", where: "Pier 70, Dogpatch", blurb: "A big industrial taproom with a patio. Reviewers rate it 4.8.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75867, lng: -122.38391, dwell: 45, q: "Standard Deviant Brewing Pier 70, 1070 Maryland St, San Francisco, CA", hrs: [[15,21],[15,21],[15,21],[15,21],[14,22],[12,22],[11,21]] },
+    { id: "dogpatch-saloon", cat: "beer", name: "Dogpatch Saloon", where: "3rd St, Dogpatch", blurb: "A historic, dog-friendly neighborhood bar with good cocktails.", entry: 8, entryLabel: "Budget about $8 a drink (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75806, lng: -122.38857, dwell: 45, q: "Dogpatch Saloon, 2496 3rd St, San Francisco, CA", hrs: [[14,26],[14,26],[14,26],[14,26],[12,26],[11,26],[11,26]] },
+    { id: "harmonic", cat: "beer", name: "Harmonic Brewing", where: "Thrive City, next to Chase Center", blurb: "A brewpub with indoor and outdoor seating, right by Chase Center.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.7688, lng: -122.3869, dwell: 45, q: "Harmonic Brewing Thrive City, 7 Warriors Way, San Francisco, CA", hrs: [N,[15,21],[15,21],[15,21],[15,22],[12,22],[12,20]] },
+    { id: "discodelic", cat: "records", name: "Discodelic", where: "24th St, Mission", blurb: "Rare Latin records: salsa, cumbia and soul. Prices run high.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni or BART, about $3 each way", lat: 37.75255, lng: -122.41579, dwell: 30, q: "Discodelic, 3174 24th St, San Francisco, CA", hrs: [[12,19],[12,19],[12,20],[12,20],[12,20],[12,20],[12,19]] },
+    { id: "minnesota-street", cat: "art", name: "Minnesota Street Project", where: "Minnesota St, Dogpatch", blurb: "A building full of contemporary art galleries. Reviewers say it's free.", entry: 0, entryLabel: "Free, per reviewers", transitLabel: "Muni $2.75 each way", lat: 37.75425, lng: -122.38939, dwell: 60, q: "Minnesota Street Project, 1275 Minnesota St, San Francisco, CA", hrs: [N,[11,18],[11,18],[11,18],[11,18],[11,18],N] },
+    { id: "piccino-cafe", cat: "food", name: "Piccino Coffee Bar", where: "22nd St, Dogpatch", blurb: "A small cafe with good pastries and well-made coffee.", entry: 10, entryLabel: "Coffee and a pastry, about $10 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75773, lng: -122.38998, dwell: 30, q: "Piccino Coffee Bar, 845 22nd St, San Francisco, CA", hrs: [[7,17.5],[7,17.5],[7,21],[7,21],[7,21],[8,21],[8,20.75]] },
+    { id: "coffeeshop-sf", cat: "food", name: "CoffeeShop", where: "22nd St, Dogpatch", blurb: "A bakery and micro-roastery with a clean Scandinavian look.", entry: 10, entryLabel: "Coffee and a pastry, about $10 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75794, lng: -122.39042, dwell: 30, q: "CoffeeShop Bakery and Micro-Roastery, 900 22nd St, San Francisco, CA", hrs: R([7,18]) },
+    { id: "neighbor-bakehouse", cat: "food", name: "Neighbor Bakehouse", where: "3rd St, Dogpatch", blurb: "Known for oversized croissants and pastries. Mostly takeout.", entry: 7, entryLabel: "Pastries about $7 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75964, lng: -122.38818, dwell: 15, q: "Neighbor Bakehouse, 2343 3rd St, San Francisco, CA", hrs: [N,[8,15],[8,15],[8,15],[8,15],[8,15],[8,15]] },
+    { id: "wooly-pig", cat: "food", name: "Wooly Pig", where: "3rd St, Dogpatch", blurb: "Southeast Asian-inspired sandwiches, burritos and curry udon.", entry: 18, entryLabel: "Meals about $15-20 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76064, lng: -122.38835, dwell: 45, q: "Wooly Pig, 2295 3rd St, San Francisco, CA", hrs: [[8,21],[8,21],[8,21],[8,21],[8,21],[9,15],[9,15]] },
+    { id: "molotovs", cat: "beer", name: "Molotov's", where: "Haight St", blurb: "A Haight dive with a jukebox, pinball and a pool table. Reviewers cite $6 drinks.", entry: 6, entryLabel: "Drinks about $6 per a reviewer", transitLabel: "Muni $2.75 each way", lat: 37.77207, lng: -122.43177, dwell: 45, q: "Molotov's, 582 Haight St, San Francisco, CA", hrs: R([15,26]) },
+    { id: "noc-noc", cat: "beer", name: "Noc Noc", where: "Haight St", blurb: "A dark, eclectic bar with a good beer list, including sours. Bring food from next door.", entry: 8, entryLabel: "About $8 a drink (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.77187, lng: -122.4314, dwell: 45, q: "Noc Noc, 557 Haight St, San Francisco, CA", hrs: [[17,25],[17,25],[17,25],[17,25],[17,26],[17,26],[17,25]] },
+    { id: "zam-zam", cat: "beer", name: "Zam Zam", where: "Haight St, near Amoeba", blurb: "A classic cocktail bar with a one-of-a-kind interior.", entry: 14, entryLabel: "Cocktails about $14 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76956, lng: -122.44935, dwell: 45, q: "Zam Zam, 1633 Haight St, San Francisco, CA", hrs: [[15,26],[15,26],[15,26],[15,26],[15,26],[13,26],[13,26]], note: "Cash only" },
+    { id: "stoa", cat: "beer", name: "Stoa", where: "Haight St", blurb: "A cocktail bar with a gluten-free food menu. You order at the bar.", entry: 14, entryLabel: "Cocktails about $14 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.77145, lng: -122.43386, dwell: 45, q: "Stoa, 701 Haight St, San Francisco, CA", hrs: [[16,22],[16,22],[16,22],[16,23],[16,24],[16,24],N] },
+    { id: "zeitgeist", cat: "beer", name: "Zeitgeist", where: "Valencia St at Duboce", blurb: "A big beer garden with a long patio. Order drinks at the bar.", entry: 9, entryLabel: "About $9 a beer (estimate)", transitLabel: "Muni $2.75 each way, or a 20 min walk", lat: 37.77002, lng: -122.42212, dwell: 45, q: "Zeitgeist, 199 Valencia St, San Francisco, CA", hrs: [[14,23],[14,23],[14,23],[14,24],[14,25],[12,25],[11,21.5]] },
+    { id: "mosto", cat: "beer", name: "Mosto", where: "Valencia St, Mission", blurb: "A mezcal and cocktail bar with tacos and burgers.", entry: 14, entryLabel: "Cocktails about $14 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76096, lng: -122.42134, dwell: 45, q: "Mosto, 741A Valencia St, San Francisco, CA", hrs: [[17,23],[17,23],[17,23],[17,23],[16,24],[16,24],[17,23]] },
+    { id: "blondies", cat: "beer", name: "Blondie's Bar", where: "Valencia St, Mission", blurb: "A Valencia dive with DJs and live music. Cover varies.", entry: 10, entryLabel: "About $10 a drink (estimate). Cover varies", transitLabel: "Muni $2.75 each way", lat: 37.76422, lng: -122.42212, dwell: 45, q: "Blondie's Bar, 540 Valencia St, San Francisco, CA", hrs: [[16,26],[16,26],[16,26],[16,26],[14,26],[14,26],[14,26]] },
+    { id: "emperor-nortons", cat: "beer", name: "Emperor Norton's BoozeLand", where: "Larkin St, Tenderloin", blurb: "A Tenderloin dive with pool, shuffleboard and a patio. Steps from Dark Entries.", entry: 8, entryLabel: "About $8 a drink (estimate)", transitLabel: "5 min walk", lat: 37.78266, lng: -122.41739, dwell: 45, q: "Emperor Norton's BoozeLand, 510 Larkin St, San Francisco, CA", hrs: R([13,26]) },
+    { id: "kozy-kar", cat: "beer", name: "Kozy Kar", where: "Polk St", blurb: "A quirky bar with themed booths and hot tub seating.", entry: 10, entryLabel: "About $10 a drink (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.79134, lng: -122.42062, dwell: 45, q: "Kozy Kar, 1548 Polk St, San Francisco, CA", hrs: [N,N,[19,26],[19,26],[19,26],[19,26],N] },
+    { id: "brass-tacks", cat: "beer", name: "Brass Tacks", where: "Hayes St, Hayes Valley", blurb: "A dark cocktail lounge, close to Grooves.", entry: 12, entryLabel: "Cocktails about $12 (estimate)", transitLabel: "12 min walk", lat: 37.77686, lng: -122.42439, dwell: 45, q: "Brass Tacks, 488 Hayes St, San Francisco, CA", hrs: [[16,25],[16,25],[16,25],[16,26],[16,26],[16,26],[16,24]] },
+    { id: "el-buen-sabor", cat: "food", name: "Taqueria El Buen Sabor", where: "Valencia St, Mission", blurb: "A busy taqueria with big burritos and free hot sauce. Near Stranded.", entry: 13, entryLabel: "Burrito about $13 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76182, lng: -122.42145, dwell: 25, q: "Taqueria El Buen Sabor, 699 Valencia St, San Francisco, CA", hrs: R([11,21.5]) },
+    { id: "la-cumbre", cat: "food", name: "La Cumbre Taqueria", where: "Valencia St, Mission", blurb: "Burritos and tacos, grilled in front of you.", entry: 13, entryLabel: "Burrito about $13 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76459, lng: -122.42165, dwell: 25, q: "La Cumbre Taqueria, 515 Valencia St, San Francisco, CA", hrs: [[11,22],[11,22],[11,22],[11,22],[11,26],[11,26],[11,21]] },
+    { id: "la-taqueria", cat: "food", name: "La Taqueria", where: "Mission St, Mission", blurb: "A famous burrito spot with a separate takeout window. Expect a line.", entry: 14, entryLabel: "Burrito about $14 (estimate)", transitLabel: "Muni or BART, about $3 each way", lat: 37.7509, lng: -122.41809, dwell: 30, q: "La Taqueria, 2889 Mission St, San Francisco, CA", hrs: [N,N,[11,20.75],[11,20.75],[11,20.75],[11,20.25],[11,19.25]] },
+    { id: "seniores", cat: "food", name: "Seniore's Pizza", where: "Haight St", blurb: "Thick slices and cheesesteaks, open late. Near Vinyl Dreams.", entry: 7, entryLabel: "A slice about $6-7 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.77236, lng: -122.42977, dwell: 20, q: "Seniore's Pizza, 456 Haight St, San Francisco, CA", hrs: R([11.5,25.5]) },
+    { id: "slice-house", cat: "food", name: "Slice House", where: "Haight St, near Amoeba", blurb: "Big New York-style slices from a pizza champion.", entry: 8, entryLabel: "A slice about $6-8 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76975, lng: -122.44755, dwell: 20, q: "Slice House by Tony Gemignani, 1535 Haight St, San Francisco, CA", hrs: [[11,22],[11,22],[11,22],[11,22],[11,23],[11,23],[11,22]] },
+    { id: "saigon-sandwich", cat: "food", name: "Saigon Sandwich", where: "Larkin St, Tenderloin", blurb: "Classic banh mi to go. Close to Dark Entries.", entry: 7, entryLabel: "Banh mi about $6-7 per reviewers. Cash only", transitLabel: "6 min walk", lat: 37.78313, lng: -122.41736, dwell: 15, q: "Saigon Sandwich, 560 Larkin St, San Francisco, CA", hrs: [[7,17.5],[7,17.5],[7,18],[7,18],[7,18],[7,18],[7,18]], note: "Cash only" },
+    { id: "lg-sandwich", cat: "food", name: "L & G Vietnamese Sandwich", where: "Eddy St, Tenderloin", blurb: "Cheap, loaded banh mi. Cards accepted with a fee.", entry: 7, entryLabel: "Banh mi about $6 per a reviewer", transitLabel: "6 min walk", lat: 37.78338, lng: -122.41783, dwell: 15, q: "L & G Vietnamese Sandwich, 602 Eddy St, San Francisco, CA", hrs: R([8,19]) },
+    { id: "hayz-dog", cat: "food", name: "Hayz Dog", where: "Hayes St, Hayes Valley", blurb: "Quick hot dogs with vegan options. Near Grooves.", entry: 14, entryLabel: "A dog and a side, under $20 per a reviewer", transitLabel: "10 min walk", lat: 37.77709, lng: -122.42235, dwell: 25, q: "Hayz Dog, 364 Hayes St, San Francisco, CA", hrs: [[11,21],[11,21],[11,21],[11,23.5],[11,23.5],[11,23.5],[11,21]] },
+    { id: "double-decker", cat: "food", name: "Double Decker", where: "Grove St, Hayes Valley", blurb: "Burgers and fries, mostly takeout.", entry: 15, entryLabel: "Burger about $15 (estimate)", transitLabel: "10 min walk", lat: 37.77762, lng: -122.42388, dwell: 25, q: "Double Decker, 465 Grove St, San Francisco, CA", hrs: R([11,20.5]) }
+  ];
+
+  var byId = {};
+  ITEMS.forEach(function (i) { byId[i.id] = i; });
+
+  var TODAY = sfParts().day;
+  var state = {
+    route: [],
+    view: "stops",
+    filter: "all",
+    zoom: "fit",
+    dwell: {},
+    cfg: { start: "civic", startTime: "12:00", mode: "auto", walkLimit: 0.8, loop: false, day: 0 }
+  };
+  state.cfg.day = TODAY;
+  (function () {
+    var p = sfParts(), m = Math.ceil(p.min / 30) * 30;
+    state.cfg.startTime = (m >= 8 * 60 && m <= 21 * 60) ? pad2(Math.floor(m / 60)) + ":" + pad2(m % 60) : "12:00";
+  })();
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  /* ---------- helpers ---------- */
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function fmtTime(min) {
+    var h = Math.floor(min / 60) % 24, m = Math.round(min % 60);
+    var ap = h >= 12 ? "pm" : "am"; var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ap;
+  }
+  function fmtDur(min) {
+    min = Math.round(min);
+    if (min < 60) return min + " min";
+    var h = Math.floor(min / 60), m = min % 60;
+    return h + "h " + (m < 10 ? "0" : "") + m + "m";
+  }
+  function money(n) { return "$" + (Math.round(n * 100) / 100 % 1 === 0 ? Math.round(n) : n.toFixed(2)); }
+  function parseTime(v) { var p = String(v || "12:00").split(":"); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); }
+
+  function hav(a, b) {
+    var R = 3958.8, r = Math.PI / 180;
+    var dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+    var s = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.pow(Math.sin(dLng / 2), 2);
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+  var myLoc = null;
+  function startObj() {
+    if (state.cfg.start === "me" && myLoc) return myLoc;
+    for (var i = 0; i < STARTS.length; i++) if (STARTS[i].id === state.cfg.start) return STARTS[i];
+    return STARTS[0];
+  }
+  function cfgObj() {
+    return { start: startObj(), startMin: parseTime(state.cfg.startTime), mode: state.cfg.mode, walkLimit: state.cfg.walkLimit, loop: state.cfg.loop, day: state.cfg.day };
+  }
+  function dwellOf(it) { return it.dwell; }
+
+  /* ---------- opening hours by day ---------- */
+  function sfParts() {
+    try {
+      var f = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", weekday: "short", hour: "numeric", minute: "numeric", hour12: false });
+      var o = {}; f.formatToParts(new Date()).forEach(function (p) { o[p.type] = p.value; });
+      var d = Math.max(0, DAYS.indexOf(o.weekday)), h = parseInt(o.hour, 10) % 24, m = parseInt(o.minute, 10) || 0;
+      return { day: d, min: h * 60 + m };
+    } catch (e) { var n = new Date(); return { day: (n.getDay() + 6) % 7, min: n.getHours() * 60 + n.getMinutes() }; }
+  }
+  function dayWord(d) { return d === TODAY ? "today" : DAYS_LONG[d]; }
+  function winOf(it, day) {
+    var h = it.hrs; if (!h) return { unknown: true };
+    var v = h[day];
+    if (v === null) return { closed: true };
+    if (v === "24") return {};
+    return { open: Math.round(v[0] * 60), close: Math.round(v[1] * 60) };
+  }
+  function isClosed(it) { return !!(it.hrs && it.hrs[state.cfg.day] === null); }
+  function fmtHour(x) {
+    var m = Math.round(x * 60), h = Math.floor(m / 60) % 24, mm = m % 60, ap = h >= 12 ? "pm" : "am", h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + (mm ? ":" + (mm < 10 ? "0" : "") + mm : "") + ap;
+  }
+  function statusText(it, day) {
+    var h = it.hrs, base;
+    if (!h) base = it.noHours || "Hours not checked";
+    else {
+      var v = h[day];
+      if (v === null) {
+        base = "Closed " + (day === TODAY ? "today" : DAYS[day]);
+        for (var k = 1; k < 7; k++) { var d2 = (day + k) % 7, w = h[d2]; if (w) { base += ". Opens " + DAYS[d2] + (w === "24" ? "" : " " + fmtHour(w[0])); break; } }
+      } else if (v === "24") base = "Open all day";
+      else base = (it.assumed ? "Hours not confirmed, assuming " : "Open ") + fmtHour(v[0]) + "-" + fmtHour(v[1]);
+    }
+    return base + (it.note ? ". " + it.note : "");
+  }
+
+  /* ---------- legs (estimates, upgraded by Google Directions when available) ---------- */
+  var legCache = {}, legVer = 0;
+  function legKey(a, b, mode) { return a.id + ">" + b.id + ":" + mode; }
+  function leg(a, b, cfg) {
+    var mi = hav(a, b) * STREET, mode = (cfg.mode === "walk" || mi <= cfg.walkLimit) ? "walk" : "muni";
+    if (!cfg.estOnly) {
+      var c = legCache[legKey(a, b, mode)];
+      if (c && c.ok) return { mode: mode, mi: c.mi, min: c.min, real: true };
+    }
+    if (mode === "walk") return { mode: "walk", mi: mi, min: Math.round(mi * WALK_MIN_PER_MI) };
+    return { mode: "muni", mi: mi, min: Math.round(8 + (mi / 8) * 60) };
+  }
+
+  /* ---------- simulation ---------- */
+  function simulate(order, cfg) {
+    var t = cfg.startMin, pos = cfg.start, lastPaid = -9999;
+    var out = { rows: [], transit: 0, entry: 0, walkMin: 0, muniMin: 0, wait: 0, stay: 0, viol: 0, soft: 0, tbd: false, back: null };
+    order.forEach(function (it) {
+      var L = leg(pos, it, cfg), cost = 0, free = false;
+      if (L.mode === "muni") {
+        if (t - lastPaid >= TRANSFER_MIN) { cost = FARE; lastPaid = t; } else { free = true; }
+        out.muniMin += L.min;
+      } else { out.walkMin += L.min; }
+      out.transit += cost;
+      t += L.min;
+      var arrive = t, waited = 0, issues = [];
+      var w = winOf(it, cfg.day);
+      if (w.closed) {
+        out.viol++; issues.push({ hard: true, msg: "Closed " + dayWord(cfg.day) });
+      } else {
+        if (w.open != null && arrive < w.open) { waited = w.open - arrive; t = w.open; }
+        if (w.close != null && arrive >= w.close) { out.viol++; issues.push({ hard: true, msg: it.closeMsg || ("Already closed when you arrive (closes " + fmtTime(w.close) + ")") }); }
+      }
+      var dwell = dwellOf(it), begin = t, depart = t + dwell;
+      if (it.entry === null) out.tbd = true; else out.entry += it.entry;
+      out.wait += waited; out.stay += dwell;
+      out.rows.push({ it: it, leg: L, legCost: cost, legFree: free, arrive: arrive, waited: waited, begin: begin, depart: depart, issues: issues });
+      t = depart; pos = it;
+    });
+    if (cfg.loop && order.length) {
+      var B = leg(pos, cfg.start, cfg), bc = 0, bf = false;
+      if (B.mode === "muni") { if (t - lastPaid >= TRANSFER_MIN) { bc = FARE; } else { bf = true; } out.muniMin += B.min; } else { out.walkMin += B.min; }
+      out.transit += bc; t += B.min;
+      out.back = { leg: B, legCost: bc, legFree: bf, arrive: t };
+    }
+    out.endMin = t; out.totalMin = t - cfg.startMin;
+    return out;
+  }
+  function score(sim, obj) {
+    var base = sim.viol * 1e6 + sim.soft * 5e4;
+    if (obj === "cost") return base + sim.transit * 1000 + sim.totalMin;
+    return base + sim.totalMin * 10 + sim.transit;
+  }
+
+  function permute(arr, cb) {
+    var n = arr.length, c = [], a = arr.slice(), i;
+    for (i = 0; i < n; i++) c.push(0);
+    cb(a);
+    i = 0;
+    while (i < n) {
+      if (c[i] < i) {
+        var k = (i % 2 === 0) ? 0 : c[i], tmp = a[k]; a[k] = a[i]; a[i] = tmp;
+        cb(a); c[i]++; i = 0;
+      } else { c[i] = 0; i++; }
+    }
+  }
+  function bestOrder(items, cfg, obj) {
+    if (items.length <= 1) return items.slice();
+    var best = null, bs = Infinity, s;
+    if (items.length <= 7) {
+      permute(items, function (a) { s = score(simulate(a, cfg), obj); if (s < bs) { bs = s; best = a.slice(); } });
+      return best;
+    }
+    var rest = items.slice(), cur = [], pos = cfg.start;
+    while (rest.length) {
+      var bi = 0, bd = Infinity;
+      rest.forEach(function (x, i) { var d = hav(pos, x); if (d < bd) { bd = d; bi = i; } });
+      var x = rest.splice(bi, 1)[0]; cur.push(x); pos = x;
+    }
+    best = cur; bs = score(simulate(cur, cfg), obj);
+    var improved = true, guard = 0;
+    while (improved && guard < 30) {
+      improved = false; guard++;
+      for (var i = 0; i < best.length; i++) {
+        for (var j = 0; j < best.length; j++) {
+          if (i === j) continue;
+          var t = best.slice(); var m = t.splice(i, 1)[0]; t.splice(j, 0, m);
+          s = score(simulate(t, cfg), obj);
+          if (s < bs - 1e-9) { bs = s; best = t; improved = true; }
+        }
+      }
+    }
+    return best;
+  }
+
+  /* ---------- cards ---------- */
+  var main = document.getElementById("main");
+  var chipsEl = document.getElementById("chips");
+  var cardBtns = {};
+
+  function buildCard(it) {
+    var li = el("li", "card"); li.id = "c-" + it.id;
+    li.appendChild(el("h3", "", it.name));
+    li.appendChild(el("p", "where", it.where));
+    li.appendChild(el("p", "blurb", it.blurb));
+    var dl = el("dl", "meta");
+    dl.appendChild(el("dt", "", "Cost")); dl.appendChild(el("dd", "", it.entryLabel));
+    dl.appendChild(el("dt", "", "From Civic Center")); dl.appendChild(el("dd", "", it.transitLabel));
+    li.appendChild(dl);
+    var row = el("div", "row");
+    var stEl = el("span", "status", statusText(it, state.cfg.day));
+    row.appendChild(stEl);
+    var btn = el("button", "add", "Add to my day");
+    btn.type = "button"; btn.setAttribute("aria-pressed", "false");
+    btn.addEventListener("click", function () { toggle(it.id); });
+    row.appendChild(btn); li.appendChild(row);
+    cardBtns[it.id] = { li: li, btn: btn, st: stEl };
+    return li;
+  }
+  function buildStops() {
+    CATS.forEach(function (c) {
+      var sec = el("section"); sec.setAttribute("data-cat", c.id);
+      sec.appendChild(el("h2", "", c.label));
+      if (c.note) sec.appendChild(el("p", "section-note", c.note));
+      var ul = el("ul", "list");
+      ITEMS.filter(function (i) { return i.cat === c.id; }).forEach(function (i) { ul.appendChild(buildCard(i)); });
+      sec.appendChild(ul); main.appendChild(sec);
+    });
+  }
+  function buildChips() {
+    var opts = [{ id: "all", label: "All" }].concat(CATS);
+    opts.forEach(function (c) {
+      var b = el("button", "chip", c.label); b.type = "button";
+      b.setAttribute("aria-pressed", c.id === state.filter ? "true" : "false");
+      b.addEventListener("click", function () {
+        state.filter = c.id;
+        Array.prototype.forEach.call(chipsEl.children, function (x, i) { x.setAttribute("aria-pressed", opts[i].id === state.filter ? "true" : "false"); });
+        Array.prototype.forEach.call(main.querySelectorAll("section"), function (s) { s.hidden = !(state.filter === "all" || s.getAttribute("data-cat") === state.filter); });
+      });
+      chipsEl.appendChild(b);
+    });
+  }
+  function syncCards() {
+    ITEMS.forEach(function (it) {
+      var c = cardBtns[it.id], on = state.route.indexOf(it.id) >= 0;
+      c.btn.setAttribute("aria-pressed", on ? "true" : "false");
+      c.btn.textContent = on ? "In my day" : "Add to my day";
+      c.li.className = "card" + (on ? " on" : "");
+      c.st.textContent = statusText(it, state.cfg.day);
+      c.st.className = "status" + (isClosed(it) ? " closed" : "");
+    });
+  }
+
+  /* ---------- state changes ---------- */
+  function toggle(id) {
+    var i = state.route.indexOf(id);
+    if (i >= 0) state.route.splice(i, 1); else state.route.push(id);
+    refresh();
+  }
+  function setView(v) {
+    state.view = v;
+    document.getElementById("tabStops").setAttribute("aria-pressed", v === "stops" ? "true" : "false");
+    document.getElementById("tabRoute").setAttribute("aria-pressed", v === "route" ? "true" : "false");
+    main.hidden = v !== "stops";
+    chipsEl.hidden = v !== "stops";
+    document.getElementById("routeView").hidden = v !== "route";
+    if (v === "route" && gm.ready && gm.map) { gm.fitKey = ""; setTimeout(function () { google.maps.event.trigger(gm.map, "resize"); refresh(); }, 40); }
+    refresh();
+    try { window.scrollTo(0, document.querySelector(".hero").offsetHeight); } catch (e) {}
+  }
+
+  function refresh() {
+    syncCards();
+    var items = state.route.map(function (id) { return byId[id]; });
+    var sim = simulate(items, cfgObj());
+    var total = Math.round(sim.entry + sim.transit);
+    document.getElementById("recAmt").textContent = "$" + total;
+    var s = document.getElementById("sumText");
+    if (!items.length) { s.innerHTML = "<strong>Nothing added yet</strong>"; }
+    else {
+      var t = "<strong>" + items.length + (items.length === 1 ? " stop" : " stops") + ", about $" + total + "</strong>";
+      if (sim.tbd) t += " plus covers";
+      s.innerHTML = t;
+    }
+    document.getElementById("tabRoute").textContent = items.length ? "Map and route (" + items.length + ")" : "Map and route";
+    var dayName = DAYS_LONG[state.cfg.day] + (state.cfg.day === TODAY ? " (today)" : "");
+    document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ". Tap Expand map to pan, zoom and tap pins." + (gm.ready ? "" : " This is the built-in map, so pins are approximate and lines are straight.");
+    if (state.view === "route") renderRoute(items, sim);
+    if (fs.open) { if (gm.ready) fsSheetRender(sim); else fsRender(); }
+    persist();
+  }
+
+
+  /* ---------- toast, share, persistence ---------- */
+  var toastT;
+  function showToast(m) {
+    var t = document.getElementById("toast"); t.textContent = m; t.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  }
+  function hashFor() { return "#r=" + state.route.join(",") + "&d=" + state.cfg.day + "&t=" + encodeURIComponent(state.cfg.startTime); }
+  function parseHash() {
+    var h = String(location.hash || "").replace(/^#/, ""); if (!h) return null;
+    var o = {}; h.split("&").forEach(function (kv) { var p = kv.split("="); o[p[0]] = decodeURIComponent(p[1] || ""); });
+    if (!o.r) return null;
+    return { route: o.r.split(",").filter(function (id) { return byId[id]; }), day: o.d !== undefined ? parseInt(o.d, 10) : -1, time: o.t || "" };
+  }
+  function persist() {
+    try { localStorage.setItem("sfdg:v1", JSON.stringify({ route: state.route, cfg: { start: state.cfg.start === "me" ? "civic" : state.cfg.start, mode: state.cfg.mode, walkLimit: state.cfg.walkLimit, loop: state.cfg.loop } })); } catch (e) {}
+  }
+  function restore() {
+    var h = parseHash();
+    if (h && h.route.length) {
+      state.route = h.route;
+      if (h.day >= 0 && h.day <= 6) state.cfg.day = h.day;
+      if (/^\d\d:\d\d$/.test(h.time)) state.cfg.startTime = h.time;
+      return true;
+    }
+    var saved = null; try { saved = JSON.parse(localStorage.getItem("sfdg:v1") || "null"); } catch (e) {}
+    if (saved && saved.route) {
+      state.route = saved.route.filter(function (id) { return byId[id]; });
+      var c = saved.cfg || {};
+      if (c.start && STARTS.some(function (x) { return x.id === c.start; })) state.cfg.start = c.start;
+      if (c.mode === "walk" || c.mode === "auto") state.cfg.mode = c.mode;
+      if (typeof c.walkLimit === "number" && c.walkLimit >= 0.3 && c.walkLimit <= 2) state.cfg.walkLimit = c.walkLimit;
+      state.cfg.loop = !!c.loop;
+    }
+    return false;
+  }
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { showToast("Plan copied"); }, function () { showToast("Couldn't copy the plan"); });
+    else showToast("Sharing isn't available here");
+  }
+  function sharePlan(items, sim, mapsUrl) {
+    var lines = items.map(function (it, i) { return (i + 1) + ". " + it.name + " (" + fmtTime(sim.rows[i].arrive) + ")"; });
+    var link = location.href.split("#")[0] + hashFor(), web = /^https?:/.test(link);
+    var text = "My San Francisco day (" + DAYS_LONG[state.cfg.day] + ")\n" + lines.join("\n");
+    if (navigator.share) navigator.share({ title: "My SF day", text: text, url: web ? link : mapsUrl }).catch(function () {});
+    else copyText(text + "\n" + (web ? link : mapsUrl));
+  }
+
+  /* ---------- Google Maps ---------- */
+  var gm = { ready: false, loading: false, failed: "", map: null, host: null, overlays: [], lines: [], Marker: null, fitKey: "", queue: [], pending: {}, busy: false, svc: null, rt: 0 };
+
+  function storedKey() { try { return localStorage.getItem("sfdg:gmkey") || ""; } catch (e) { return ""; } }
+  function currentKey() { return String(CONFIG.googleMapsApiKey || "").trim() || storedKey().trim(); }
+  function isDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function gmStyles() {
+    var base = [
+      { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+      { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
+      { featureType: "poi.school", stylers: [{ visibility: "off" }] },
+      { featureType: "poi", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { featureType: "transit.station.bus", stylers: [{ visibility: "off" }] }
+    ];
+    if (!isDark()) return base.concat([
+      { elementType: "geometry", stylers: [{ color: "#f1f4f8" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#cfdcec" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#cde2d2" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dfe5ee" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#566070" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#f1f4f8" }] }
+    ]);
+    return base.concat([
+      { elementType: "geometry", stylers: [{ color: "#1c2331" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#121a29" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1f3a2b" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#2b3446" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#364055" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#9ba5b4" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#171b24" }] }
+    ]);
+  }
+
+  function updateKeyBanner() {
+    document.getElementById("keyBox").hidden = gm.ready || gm.loading;
+    var msg = document.getElementById("keyMsg"); msg.hidden = !gm.failed; msg.textContent = gm.failed || "";
+    document.getElementById("resetKey").hidden = !storedKey();
+  }
+  function teardownGoogle() {
+    gm.ready = false; gm.loading = false;
+    if (gm.host && gm.host.parentNode) gm.host.parentNode.removeChild(gm.host);
+    gm.host = null; gm.map = null; gm.overlays = []; gm.lines = []; gm.fitKey = "";
+    fsEl.classList.remove("google");
+  }
+  function makeMarkerClass() {
+    class HtmlMarker extends google.maps.OverlayView {
+      constructor(pos, el) { super(); this.pos = pos; this.el = el; }
+      onAdd() { this.getPanes().overlayMouseTarget.appendChild(this.el); }
+      draw() {
+        var pr = this.getProjection(); if (!pr) return;
+        var p = pr.fromLatLngToDivPixel(new google.maps.LatLng(this.pos.lat, this.pos.lng));
+        if (p) { this.el.style.left = p.x + "px"; this.el.style.top = p.y + "px"; }
+      }
+      onRemove() { if (this.el.parentNode) this.el.parentNode.removeChild(this.el); }
+    }
+    gm.Marker = HtmlMarker;
+  }
+  function loadGoogle(key) {
+    if (!key || gm.loading || gm.ready) return;
+    gm.loading = true; gm.failed = "";
+    window.__gmInit = function () { gm.ready = true; gm.loading = false; makeMarkerClass(); updateKeyBanner(); refresh(); };
+    window.gm_authFailure = function () {
+      gm.failed = "Google rejected this key. Check that the Maps JavaScript API and Directions API are enabled and that the key allows this site.";
+      teardownGoogle(); updateKeyBanner(); refresh();
+    };
+    var sc = document.createElement("script");
+    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__gmInit&v=weekly";
+    sc.async = true;
+    sc.onerror = function () { gm.loading = false; gm.failed = "Couldn't load Google Maps. Check your connection and try again."; updateKeyBanner(); };
+    document.head.appendChild(sc);
+    updateKeyBanner();
+  }
+
+  function gmEnsureMap() {
+    if (gm.map) return gm.map;
+    var host = document.createElement("div"); host.id = "gmap"; gm.host = host;
+    var box = document.getElementById("mapBox"); box.innerHTML = ""; box.appendChild(host);
+    gm.map = new google.maps.Map(host, {
+      center: { lat: 37.7749, lng: -122.4194 }, zoom: 13, disableDefaultUI: true, zoomControl: true,
+      zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+      gestureHandling: "cooperative", clickableIcons: false, styles: gmStyles(), backgroundColor: "#cfdcec"
+    });
+    return gm.map;
+  }
+  function gmFit(whole) {
+    var map = gm.map; if (!map) return;
+    var b = new google.maps.LatLngBounds();
+    if (whole || !state.route.length) { b.extend({ lat: 37.708, lng: -122.52 }); b.extend({ lat: 37.82, lng: -122.36 }); }
+    else {
+      var st = startObj(); b.extend({ lat: st.lat, lng: st.lng });
+      state.route.forEach(function (id) { var it = byId[id]; b.extend({ lat: it.lat, lng: it.lng }); });
+    }
+    map.fitBounds(b, { top: 50, right: 50, bottom: 50, left: 50 });
+    google.maps.event.addListenerOnce(map, "idle", function () { if (map.getZoom() > 16) map.setZoom(16); });
+  }
+  function gmMoveTo(container, big) {
+    if (!gm.map || !gm.host) return;
+    var ctr = gm.map.getCenter(), z = gm.map.getZoom();
+    container.appendChild(gm.host);
+    gm.map.setOptions({ gestureHandling: big ? "greedy" : "cooperative" });
+    google.maps.event.trigger(gm.map, "resize");
+    if (ctr) gm.map.setCenter(ctr);
+    if (z) gm.map.setZoom(z);
+  }
+
+  function departDate() {
+    var now = new Date(), c = cfgObj(), diff = (c.day - sfParts().day + 7) % 7, d = new Date(now.getTime());
+    d.setDate(d.getDate() + diff); d.setHours(Math.floor(c.startMin / 60) % 24, c.startMin % 60, 0, 0);
+    if (d.getTime() < now.getTime()) d = diff === 0 ? now : new Date(d.getTime() + 7 * 864e5);
+    return d;
+  }
+  function queueLeg(a, b, mode) {
+    var key = legKey(a, b, mode); if (legCache[key] || gm.pending[key]) return;
+    gm.pending[key] = true; gm.queue.push({ key: key, a: a, b: b, mode: mode }); pump();
+  }
+  function pump() {
+    if (gm.busy || !gm.queue.length || !gm.ready) return;
+    gm.busy = true;
+    var j = gm.queue.shift();
+    if (!gm.svc) gm.svc = new google.maps.DirectionsService();
+    var req = { origin: { lat: j.a.lat, lng: j.a.lng }, destination: { lat: j.b.lat, lng: j.b.lng }, travelMode: j.mode === "walk" ? "WALKING" : "TRANSIT" };
+    if (j.mode !== "walk") req.transitOptions = { departureTime: departDate() };
+    gm.svc.route(req, function (res, status) {
+      if (status === "OK" && res && res.routes && res.routes[0]) {
+        var lg = res.routes[0].legs[0];
+        legCache[j.key] = { ok: true, path: res.routes[0].overview_path, min: Math.ceil(lg.duration.value / 60) + (j.mode === "walk" ? 0 : 4), mi: lg.distance.value / 1609.34 };
+      } else { legCache[j.key] = { ok: false, status: status }; }
+      delete gm.pending[j.key]; legVer++; gm.busy = false;
+      clearTimeout(gm.rt); gm.rt = setTimeout(refresh, 150);
+      setTimeout(pump, 220);
+    });
+  }
+
+  function onMapTap(kind, id) {
+    if (fs.open) {
+      fs.sheet = kind === "start" ? { type: "start" } : { type: kind === "go" ? "stop" : "add", id: id };
+      refresh(); return;
+    }
+    if (kind === "add") toggle(id);
+    else if (kind === "go") scrollToRow(id);
+    else showToast("Start: " + startObj().label);
+  }
+  function scrollToRow(id) {
+    var row = document.getElementById("row-" + id);
+    if (row) { if (row.scrollIntoView) row.scrollIntoView({ behavior: "smooth", block: "center" }); row.classList.add("flash"); setTimeout(function () { row.classList.remove("flash"); }, 1400); }
+  }
+
+  function gmRender(sim, items) {
+    var map = gmEnsureMap(); if (!map) return;
+    gm.overlays.forEach(function (o) { o.setMap(null); }); gm.overlays = [];
+    gm.lines.forEach(function (l) { l.setMap(null); }); gm.lines = [];
+    var cfg = cfgObj(), st = cfg.start, dark = isDark();
+    var cWalk = dark ? "#7C8CFF" : "#2B3FFF", cMuni = dark ? "#EAEFF5" : "#11151C";
+    function addLine(a, b, mode) {
+      var c = legCache[legKey(a, b, mode)], real = !!(c && c.ok && c.path), path;
+      if (real) path = c.path; else { path = [{ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng }]; queueLeg(a, b, mode); }
+      var o = { path: path, map: map, zIndex: 2, clickable: false };
+      if (mode === "walk") { o.strokeColor = cWalk; o.strokeOpacity = real ? 0.95 : 0.5; o.strokeWeight = 5; }
+      else { o.strokeColor = cMuni; o.strokeOpacity = 0; o.strokeWeight = 4; o.icons = [{ icon: { path: "M 0,-1 0,1", strokeOpacity: real ? 1 : 0.5, strokeColor: cMuni, scale: 3 }, offset: "0", repeat: "14px" }]; }
+      gm.lines.push(new google.maps.Polyline(o));
+    }
+    var prev = st;
+    sim.rows.forEach(function (r) { addLine(prev, r.it, r.leg.mode); prev = r.it; });
+    if (cfg.loop && sim.back) addLine(prev, st, sim.back.leg.mode);
+    function mk(cls, text, pos, title, onclick) {
+      var d = document.createElement("div"); d.className = "gmk " + cls; d.textContent = text || ""; if (title) d.title = title;
+      google.maps.OverlayView.preventMapHitsAndGesturesFrom(d);
+      d.addEventListener("click", onclick);
+      var m = new gm.Marker(pos, d); m.setMap(map); gm.overlays.push(m);
+    }
+    ITEMS.forEach(function (it) { if (state.route.indexOf(it.id) < 0) mk("dot", "", it, it.name, function () { onMapTap("add", it.id); }); });
+    mk("start", "S", st, "Start: " + st.label, function () { onMapTap("start"); });
+    sim.rows.forEach(function (r, i) {
+      var bad = r.issues.some(function (x) { return x.hard; });
+      mk("pin" + (bad ? " bad" : ""), String(i + 1), r.it, r.it.name, function () { onMapTap("go", r.it.id); });
+    });
+    var fk = state.route.join(",") + "|" + state.cfg.start;
+    if (gm.fitKey !== fk) { gm.fitKey = fk; gmFit(false); }
+  }
+
+  /* ---------- map ---------- */
+  var COAST = [[-122.4770,37.8106],[-122.4660,37.8085],[-122.4470,37.8085],[-122.4310,37.8065],[-122.4230,37.8075],[-122.4170,37.8100],[-122.4110,37.8112],[-122.4055,37.8090],[-122.4000,37.8060],[-122.3950,37.7990],[-122.3925,37.7955],[-122.3880,37.7890],[-122.3890,37.7800],[-122.3850,37.7700],[-122.3820,37.7580],[-122.3790,37.7480],[-122.3740,37.7380],[-122.3670,37.7330],[-122.3720,37.7230],[-122.3800,37.7140],[-122.3850,37.7080],[-122.5055,37.7080],[-122.5090,37.7300],[-122.5120,37.7600],[-122.5130,37.7750],[-122.5140,37.7800],[-122.5110,37.7830],[-122.5060,37.7860],[-122.4960,37.7870],[-122.4880,37.7900],[-122.4830,37.7930],[-122.4800,37.7990],[-122.4780,37.8070]];
+  var PRESIDIO = [[-122.477,37.806],[-122.447,37.805],[-122.446,37.797],[-122.455,37.789],[-122.487,37.790],[-122.484,37.797]];
+  var PARK = [[-122.511,37.7655],[-122.4535,37.7655],[-122.4535,37.7745],[-122.511,37.7745]];
+  var NBS = [
+    ["Presidio", -122.466, 37.798], ["Richmond", -122.485, 37.781], ["Sunset", -122.489, 37.750],
+    ["Golden Gate Park", -122.487, 37.770], ["Haight", -122.444, 37.7615], ["Downtown", -122.405, 37.790],
+    ["SoMa", -122.401, 37.775], ["Mission", -122.421, 37.752], ["North Beach", -122.411, 37.800],
+    ["Bernal Heights", -122.413, 37.735], ["Dogpatch", -122.389, 37.755], ["Marina", -122.436, 37.801]
+  ];
+  function X(lng) { return (lng + 122.52) * 3160; }
+  function Y(lat) { return (37.82 - lat) * 4000; }
+  function poly(pts, cls) { return '<polygon class="' + cls + '" points="' + pts.map(function (p) { return X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1); }).join(" ") + '"/>'; }
+
+  function fitVb(items, aspect, whole) {
+    var st = startObj(), w, cx, cy;
+    if (whole || !items.length) { w = Math.max(520, 460 / aspect); cx = 260; cy = 230; }
+    else {
+      var minX = X(st.lng), maxX = minX, minY = Y(st.lat), maxY = minY;
+      items.forEach(function (i) { var x = X(i.lng), y = Y(i.lat); minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); });
+      w = Math.max((Math.max(maxX - minX, 70) * 1.3 + 24), (Math.max(maxY - minY, 70) * 1.3 + 24) / aspect);
+      w = Math.min(w, 700); cx = (minX + maxX) / 2; cy = (minY + maxY) / 2;
+    }
+    var h = w * aspect;
+    return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
+  }
+
+  function svgString(sim, items, vb, widthPx) {
+    var cfg = cfgObj(), st = cfg.start;
+    var px = vb.w / (widthPx || 360);
+    var pts = [{ x: X(st.lng), y: Y(st.lat) }];
+    items.forEach(function (i) { pts.push({ x: X(i.lng), y: Y(i.lat) }); });
+    var s = '<svg viewBox="' + vb.x.toFixed(1) + " " + vb.y.toFixed(1) + " " + vb.w.toFixed(1) + " " + vb.h.toFixed(1) + '" role="img" aria-label="Schematic map of your route">';
+    s += '<rect class="sea" x="' + (vb.x - 800) + '" y="' + (vb.y - 800) + '" width="' + (vb.w + 1600) + '" height="' + (vb.h + 1600) + '"/>';
+    s += poly(COAST, "land") + poly(PRESIDIO, "park") + poly(PARK, "park");
+    s += '<line class="stmkt" stroke-width="' + (5 * px).toFixed(2) + '" x1="' + X(-122.3935).toFixed(1) + '" y1="' + Y(37.7955).toFixed(1) + '" x2="' + X(-122.4350).toFixed(1) + '" y2="' + Y(37.7625).toFixed(1) + '"/>';
+    NBS.forEach(function (n) { s += '<text class="nb" font-size="' + (9.5 * px).toFixed(2) + '" x="' + X(n[1]).toFixed(1) + '" y="' + Y(n[2]).toFixed(1) + '" text-anchor="middle">' + esc(n[0]) + "</text>"; });
+    var prev = pts[0];
+    sim.rows.forEach(function (r, i) {
+      var p = pts[i + 1];
+      s += '<line x1="' + prev.x.toFixed(1) + '" y1="' + prev.y.toFixed(1) + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y.toFixed(1) + '" stroke="' + (r.leg.mode === "walk" ? "var(--accent)" : "var(--ink)") + '" stroke-width="' + (3 * px).toFixed(2) + '" stroke-linecap="round"' + (r.leg.mode === "muni" ? ' stroke-dasharray="' + (8 * px).toFixed(1) + " " + (6 * px).toFixed(1) + '"' : "") + "/>";
+      prev = p;
+    });
+    if (cfg.loop && sim.back) {
+      s += '<line x1="' + prev.x.toFixed(1) + '" y1="' + prev.y.toFixed(1) + '" x2="' + pts[0].x.toFixed(1) + '" y2="' + pts[0].y.toFixed(1) + '" stroke="' + (sim.back.leg.mode === "walk" ? "var(--accent)" : "var(--ink)") + '" stroke-width="' + (2 * px).toFixed(2) + '" stroke-opacity="0.55" stroke-dasharray="' + (3 * px).toFixed(1) + " " + (5 * px).toFixed(1) + '"/>';
+    }
+    ITEMS.forEach(function (it) {
+      if (state.route.indexOf(it.id) >= 0) return;
+      s += '<g data-add="' + it.id + '" style="cursor:pointer"><circle cx="' + X(it.lng).toFixed(1) + '" cy="' + Y(it.lat).toFixed(1) + '" r="' + (14 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + X(it.lng).toFixed(1) + '" cy="' + Y(it.lat).toFixed(1) + '" r="' + (3.6 * px).toFixed(2) + '" fill="var(--muted)" opacity="0.7"/><title>' + esc(it.name) + "</title></g>";
+    });
+    s += '<g data-start="1" style="cursor:pointer"><rect x="' + (pts[0].x - 9 * px).toFixed(1) + '" y="' + (pts[0].y - 9 * px).toFixed(1) + '" width="' + (18 * px).toFixed(1) + '" height="' + (18 * px).toFixed(1) + '" rx="' + (4 * px).toFixed(1) + '" fill="var(--ink)" stroke="var(--bg)" stroke-width="' + (2 * px).toFixed(1) + '"/><text x="' + pts[0].x.toFixed(1) + '" y="' + (pts[0].y + 4.2 * px).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * px).toFixed(1) + '" font-weight="700" fill="var(--bg)" font-family="var(--display)">S</text><title>Start: ' + esc(st.label) + "</title></g>";
+    sim.rows.forEach(function (r, i) {
+      var p = pts[i + 1], bad = r.issues.some(function (x) { return x.hard; });
+      s += '<g data-go="' + r.it.id + '" style="cursor:pointer"><circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (20 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (12 * px).toFixed(1) + '" fill="' + (bad ? "var(--warn)" : "var(--accent)") + '" stroke="var(--bg)" stroke-width="' + (2 * px).toFixed(1) + '"/><text class="pin-n" x="' + p.x.toFixed(1) + '" y="' + (p.y + 4.4 * px).toFixed(1) + '" font-size="' + (12 * px).toFixed(1) + '">' + (i + 1) + "</text><title>" + esc(r.it.name) + "</title></g>";
+    });
+    return s + "</svg>";
+  }
+
+  function drawMap(sim, items) {
+    var box = document.getElementById("mapBox");
+    var vb = fitVb(items, 1, state.zoom === "city");
+    box.innerHTML = svgString(sim, items, vb, box.clientWidth || 360);
+    Array.prototype.forEach.call(box.querySelectorAll("[data-add]"), function (g) { g.addEventListener("click", function () { toggle(g.getAttribute("data-add")); }); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-go]"), function (g) {
+      g.addEventListener("click", function () {
+        var row = document.getElementById("row-" + g.getAttribute("data-go"));
+        if (row) { if (row.scrollIntoView) row.scrollIntoView({ behavior: "smooth", block: "center" }); row.classList.add("flash"); setTimeout(function () { row.classList.remove("flash"); }, 1400); }
+      });
+    });
+  }
+
+  /* ---------- full-screen interactive map ---------- */
+  var fs = { open: false, vb: null, sheet: null, ptrs: {}, g: null };
+  var fsEl = document.getElementById("mapFs"), fsMap = document.getElementById("fsMap"), fsSheet = document.getElementById("fsSheet");
+
+  function fsRect() {
+    var r = fsMap.getBoundingClientRect();
+    return { left: r.left || 0, top: r.top || 0, width: r.width || 360, height: r.height || 600 };
+  }
+  function fsItems() { return state.route.map(function (id) { return byId[id]; }); }
+  function fsSheetReset() { fs.sheet = null; }
+
+  function fsRender() {
+    if (!fs.open) return;
+    var items = fsItems(), sim = simulate(items, cfgObj()), r = fsRect();
+    if (!fs.vb) fs.vb = fitVb(items, r.height / r.width, false);
+    fs.vb.h = fs.vb.w * r.height / r.width;
+    fsMap.innerHTML = svgString(sim, items, fs.vb, r.width);
+    fsSheetRender(sim);
+  }
+  function fsApplyVb() {
+    var svg = fsMap.querySelector("svg"), v = fs.vb;
+    if (svg) svg.setAttribute("viewBox", v.x.toFixed(1) + " " + v.y.toFixed(1) + " " + v.w.toFixed(1) + " " + v.h.toFixed(1));
+  }
+  function fsZoomAt(factor, cx, cy) {
+    var r = fsRect(), v = fs.vb, k = v.w / r.width;
+    var mx = v.x + cx * k, my = v.y + cy * k;
+    var nw = Math.min(700, Math.max(40, v.w * factor)), nk = nw / r.width;
+    v.x = mx - cx * nk; v.y = my - cy * nk; v.w = nw; v.h = nw * r.height / r.width;
+  }
+  function fsFitTo(whole) {
+    var r = fsRect(); fs.vb = fitVb(fsItems(), r.height / r.width, whole); fsRender();
+  }
+
+  function fsSheetRender(sim) {
+    fsSheet.innerHTML = "";
+    var sh = fs.sheet;
+    if (!sh) { fsSheet.hidden = true; return; }
+    var acts = el("div", "acts");
+    function btn(label, cls, fn) { var b = el("button", "btn small " + (cls || ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); }
+    if (sh.type === "start") {
+      fsSheet.appendChild(el("h3", "", "Start: " + startObj().label));
+      fsSheet.appendChild(el("p", "muted", "Leaving at " + fmtTime(cfgObj().startMin)));
+    } else {
+      var it = byId[sh.id], idx = state.route.indexOf(sh.id);
+      if (idx < 0 && sh.type === "stop") { fs.sheet = null; fsSheet.hidden = true; return; }
+      if (idx >= 0) {
+        var row = sim.rows[idx];
+        fsSheet.appendChild(el("h3", "", (idx + 1) + ". " + it.name));
+        fsSheet.appendChild(el("p", "", "Arrive " + fmtTime(row.arrive) + (row.waited ? ", wait " + fmtDur(row.waited) + " until it opens" : "")));
+        fsSheet.appendChild(el("p", "muted", statusText(it, state.cfg.day)));
+        row.issues.forEach(function (x) { fsSheet.appendChild(el("p", "issue", x.msg)); });
+        btn("Remove from route", "ghost", function () { fs.sheet = null; toggle(sh.id); });
+        btn("Show in list", "ghost", function () {
+          fsClose();
+          var rowEl = document.getElementById("row-" + sh.id);
+          if (rowEl) { if (rowEl.scrollIntoView) rowEl.scrollIntoView({ behavior: "smooth", block: "center" }); rowEl.classList.add("flash"); setTimeout(function () { rowEl.classList.remove("flash"); }, 1400); }
+        });
+      } else {
+        fsSheet.appendChild(el("h3", "", it.name));
+        fsSheet.appendChild(el("p", "muted", it.where));
+        fsSheet.appendChild(el("p", "", it.entryLabel));
+        fsSheet.appendChild(el("p", isClosed(it) ? "issue" : "muted", statusText(it, state.cfg.day)));
+        btn("Add to route", "", function () { fs.sheet = { type: "stop", id: sh.id }; toggle(sh.id); });
+      }
+    }
+    btn("Close", "ghost", function () { fs.sheet = null; fsRender(); });
+    fsSheet.appendChild(acts);
+    fsSheet.hidden = false;
+  }
+
+  function fsHandleTap(t) {
+    if (!t) { if (fs.sheet) { fs.sheet = null; fsRender(); } return; }
+    if (t.getAttribute("data-go")) fs.sheet = { type: "stop", id: t.getAttribute("data-go") };
+    else if (t.getAttribute("data-add")) fs.sheet = { type: "add", id: t.getAttribute("data-add") };
+    else fs.sheet = { type: "start" };
+    fsRender();
+  }
+
+  function fsOpen() {
+    fs.open = true; fs.vb = null; fs.sheet = null; fs.ptrs = {}; fs.g = null;
+    fsEl.hidden = false; document.body.style.overflow = "hidden";
+    if (gm.ready && gm.map) { fsEl.classList.add("google"); gmMoveTo(document.getElementById("fsGoogle"), true); fsSheetRender(simulate(fsItems(), cfgObj())); }
+    else { fsEl.classList.remove("google"); fsRender(); }
+    var d = document.getElementById("fsDone"); if (d.focus) d.focus();
+  }
+  function fsClose() {
+    fs.open = false; fsEl.hidden = true; document.body.style.overflow = "";
+    if (gm.ready && gm.map) gmMoveTo(document.getElementById("mapBox"), false);
+  }
+
+  function ptrCount() { return Object.keys(fs.ptrs).length; }
+  function setupFs() {
+    fsMap.addEventListener("pointerdown", function (e) {
+      fs.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      try { fsMap.setPointerCapture(e.pointerId); } catch (x) {}
+      var n = ptrCount();
+      if (n === 1) {
+        var tgt = e.target && e.target.closest ? e.target.closest("[data-go],[data-add],[data-start]") : null;
+        fs.g = { mode: "pan", sx: e.clientX, sy: e.clientY, vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, moved: false, tgt: tgt };
+      } else if (n === 2) {
+        var k = Object.keys(fs.ptrs), a = fs.ptrs[k[0]], b = fs.ptrs[k[1]], r = fsRect();
+        var kk = fs.vb.w / r.width, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        fs.g = { mode: "pinch", d0: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, ax: fs.vb.x + (mx - r.left) * kk, ay: fs.vb.y + (my - r.top) * kk, moved: true };
+      }
+    });
+    fsMap.addEventListener("pointermove", function (e) {
+      if (!fs.ptrs[e.pointerId] || !fs.g) return;
+      fs.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var r = fsRect(), g = fs.g;
+      if (g.mode === "pan" && ptrCount() === 1) {
+        var dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+        if (!g.moved && Math.hypot(dx, dy) < 6) return;
+        g.moved = true;
+        var k = g.vb0.w / r.width;
+        fs.vb.x = g.vb0.x - dx * k; fs.vb.y = g.vb0.y - dy * k;
+        fsApplyVb();
+      } else if (g.mode === "pinch" && ptrCount() >= 2) {
+        var ks = Object.keys(fs.ptrs), a = fs.ptrs[ks[0]], b = fs.ptrs[ks[1]];
+        var d = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        var nw = Math.min(700, Math.max(40, g.vb0.w * g.d0 / d)), nk = nw / r.width;
+        fs.vb.w = nw; fs.vb.h = nw * r.height / r.width;
+        fs.vb.x = g.ax - (mx - r.left) * nk; fs.vb.y = g.ay - (my - r.top) * nk;
+        fsApplyVb();
+      }
+    });
+    function end(e) {
+      if (!fs.ptrs[e.pointerId]) return;
+      delete fs.ptrs[e.pointerId];
+      var n = ptrCount(), g = fs.g;
+      if (n === 0) {
+        fs.g = null;
+        if (g && g.mode === "pan" && !g.moved) fsHandleTap(g.tgt);
+        else fsRender();
+      } else if (n === 1 && g && g.mode === "pinch") {
+        var k = Object.keys(fs.ptrs)[0];
+        fs.g = { mode: "pan", sx: fs.ptrs[k].x, sy: fs.ptrs[k].y, vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, moved: true, tgt: null };
+      }
+    }
+    fsMap.addEventListener("pointerup", end);
+    fsMap.addEventListener("pointercancel", end);
+    fsMap.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      var r = fsRect(); fsZoomAt(e.deltaY > 0 ? 1.25 : 0.8, e.clientX - r.left, e.clientY - r.top); fsRender();
+    }, { passive: false });
+    fsMap.addEventListener("dblclick", function (e) {
+      var r = fsRect(); fsZoomAt(0.5, e.clientX - r.left, e.clientY - r.top); fsRender();
+    });
+    document.getElementById("fsIn").addEventListener("click", function () { var r = fsRect(); fsZoomAt(0.6, r.width / 2, r.height / 2); fsRender(); });
+    document.getElementById("fsOut").addEventListener("click", function () { var r = fsRect(); fsZoomAt(1.6, r.width / 2, r.height / 2); fsRender(); });
+    document.getElementById("fsFit").addEventListener("click", function () { if (gm.ready) gmFit(false); else fsFitTo(false); });
+    document.getElementById("fsCity").addEventListener("click", function () { if (gm.ready) gmFit(true); else fsFitTo(true); });
+    document.getElementById("fsDone").addEventListener("click", fsClose);
+    document.addEventListener("keydown", function (e) { if (fs.open && e.key === "Escape") fsClose(); });
+    window.addEventListener("resize", function () { if (fs.open) fsRender(); });
+    document.getElementById("expandMap").addEventListener("click", fsOpen);
+  }
+
+  /* ---------- route view ---------- */
+  var cmpCache = { key: "", opts: null };
+
+  function sameOrder(a, b) { return a.length === b.length && a.every(function (x, i) { return x.id === b[i].id; }); }
+
+  function computeOptions(items, cfg) {
+    var key = JSON.stringify([state.route, state.cfg, legVer, myLoc ? myLoc.lat : 0]);
+    if (cmpCache.key === key) return cmpCache.opts;
+    var cur = items.slice();
+    var est = {}; Object.keys(cfg).forEach(function (k) { est[k] = cfg[k]; }); est.estOnly = true;
+    var fast = bestOrder(items, est, "time");
+    var cheap = bestOrder(items, est, "cost");
+    var list = [{ labels: ["Your order"], order: cur }];
+    function add(label, ord) {
+      for (var i = 0; i < list.length; i++) if (sameOrder(list[i].order, ord)) { list[i].labels.push(label); return; }
+      list.push({ labels: [label], order: ord });
+    }
+    add("Fastest", fast); add("Cheapest transit", cheap);
+    list.forEach(function (o) { o.sim = simulate(o.order, cfg); o.scoreT = score(o.sim, "time"); });
+    var rec = list[0];
+    list.forEach(function (o) { if (o.scoreT < rec.scoreT - 1e-9) rec = o; });
+    rec.rec = true;
+    cmpCache = { key: key, opts: list };
+    return list;
+  }
+
+  function renderRoute(items, sim) {
+    var empty = document.getElementById("routeEmpty"), body = document.getElementById("routeBody");
+    empty.hidden = items.length > 0; body.hidden = items.length === 0;
+    if (!items.length) return;
+    var cfg = cfgObj();
+
+    updateKeyBanner();
+    if (gm.ready) gmRender(sim, items); else drawMap(sim, items);
+
+    // compare
+    var cmp = document.getElementById("cmp"); cmp.innerHTML = "";
+    var closedNow = items.filter(isClosed);
+    if (closedNow.length) {
+      var note = el("div", "opt");
+      note.appendChild(el("p", "bad", closedNow.length + (closedNow.length === 1 ? " stop is" : " stops are") + " closed " + dayWord(state.cfg.day) + ": " + closedNow.map(function (x) { return x.name; }).join(", ") + "."));
+      var rb = el("button", "btn small", "Remove closed stops"); rb.type = "button";
+      rb.addEventListener("click", function () { state.route = state.route.filter(function (id) { return !isClosed(byId[id]); }); refresh(); });
+      note.appendChild(rb); cmp.appendChild(note);
+    }
+    var opts = items.length > 1 ? computeOptions(items, cfg) : [{ labels: ["Your order"], order: items, sim: sim, rec: false }];
+    opts.forEach(function (o) {
+      var card = el("div", "opt" + (o.rec && opts.length > 1 ? " rec" : ""));
+      var lbl = o.labels.join(" and ");
+      if (lbl === "Fastest and Cheapest transit") lbl = "Fastest and cheapest";
+      else if (lbl === "Your order and Fastest") lbl = "Your order, also the fastest";
+      else if (lbl === "Your order and Cheapest transit") lbl = "Your order, also the cheapest";
+      else if (lbl === "Your order and Fastest and Cheapest transit") lbl = "Your order, also fastest and cheapest";
+      var h = el("h4", "", lbl);
+      if (o.rec && opts.length > 1) h.appendChild(el("span", "tag", "Recommended"));
+      card.appendChild(h);
+      card.appendChild(el("p", "nums", fmtDur(o.sim.totalMin) + " total, " + money(o.sim.transit) + " transit, ends " + fmtTime(o.sim.endMin)));
+      card.appendChild(el("p", "seq", o.order.map(function (x) { return x.name; }).join(", then ")));
+      if (o.sim.viol > 0) card.appendChild(el("p", "bad", o.sim.viol + (o.sim.viol === 1 ? " stop is closed or missed" : " stops are closed or missed") + " in this order."));
+      else card.appendChild(el("p", "ok", "No timing conflicts."));
+      if (!sameOrder(o.order, items)) {
+        var b = el("button", "btn small", "Use this order"); b.type = "button";
+        b.addEventListener("click", function () { state.route = o.order.map(function (x) { return x.id; }); refresh(); });
+        card.appendChild(b);
+      }
+      cmp.appendChild(card);
+    });
+
+    // timeline
+    var tl = document.getElementById("timeline"); tl.innerHTML = "";
+    sim.rows.forEach(function (r, i) {
+      var li = el("li");
+      var lg = r.leg, txt;
+      if (lg.mode === "walk") txt = "Walk " + fmtDur(lg.min) + ", " + lg.mi.toFixed(1) + " mi";
+      else txt = "Muni about " + fmtDur(lg.min) + ", " + lg.mi.toFixed(1) + " mi, " + (r.legFree ? "free transfer" : money(FARE));
+      li.appendChild(el("div", "legrow" + (lg.mode === "muni" ? " muni" : ""), (i === 0 ? "From " + startObj().label + ": " : "") + txt));
+      var row = el("div", "stoprow"); row.id = "row-" + r.it.id;
+      var bad = r.issues.some(function (x) { return x.hard; });
+      row.appendChild(el("div", "badge" + (bad ? " bad" : ""), String(i + 1)));
+      var body = el("div");
+      body.appendChild(el("h4", "", r.it.name));
+      var when = "Arrive " + fmtTime(r.arrive) + (r.waited ? ", wait " + fmtDur(r.waited) + " until it opens" : "");
+      body.appendChild(el("p", "muted", when));
+      body.appendChild(el("p", "muted", statusText(r.it, state.cfg.day)));
+      r.issues.forEach(function (x) { body.appendChild(el("p", "issue", x.msg)); });
+      var ctl = el("div", "ctl");
+      function mk(label, aria, fn, dis) {
+        var b = el("button", "btn ghost small", label); b.type = "button"; b.setAttribute("aria-label", aria);
+        if (dis) b.disabled = true; else b.addEventListener("click", fn); return b;
+      }
+      ctl.appendChild(mk("Remove", "Remove " + r.it.name, function () { toggle(r.it.id); }));
+      body.appendChild(ctl);
+      row.appendChild(body);
+      row.appendChild(el("span", "grip"));
+      row.tabIndex = 0;
+      row.setAttribute("aria-label", r.it.name + ", stop " + (i + 1) + ". Press and hold to drag, or use Alt and the arrow keys to move it.");
+      (function (idx, id) {
+        row.addEventListener("keydown", function (e) {
+          if (!e.altKey || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+          e.preventDefault(); moveStop(idx, e.key === "ArrowUp" ? -1 : 1, id);
+        });
+      })(i, r.it.id);
+      li.appendChild(row); tl.appendChild(li);
+    });
+    if (cfg.loop && sim.back) {
+      var bl = el("li"); var b = sim.back;
+      bl.appendChild(el("div", "legrow" + (b.leg.mode === "muni" ? " muni" : ""), "Back to start: " + (b.leg.mode === "walk" ? "walk " + fmtDur(b.leg.min) : "Muni about " + fmtDur(b.leg.min) + ", " + (b.legFree ? "free transfer" : money(FARE))) + ", arrive " + fmtTime(b.arrive)));
+      tl.appendChild(bl);
+    }
+
+    // totals
+    var tot = document.getElementById("totals"); tot.innerHTML = "";
+    tot.appendChild(el("p", "big", fmtDur(sim.totalMin) + ", ends " + fmtTime(sim.endMin)));
+    tot.appendChild(el("p", "", "Moving: " + fmtDur(sim.walkMin + sim.muniMin) + " (walking " + fmtDur(sim.walkMin) + ", Muni " + fmtDur(sim.muniMin) + ")" + (sim.wait ? ". Waiting for openings: " + fmtDur(sim.wait) : "") + "."));
+    tot.appendChild(el("p", "", "Transit " + money(sim.transit) + ". Entry and drinks about " + money(sim.entry) + (sim.tbd ? " plus covers" : "") + "."));
+    var names = items.map(function (x) { return x.q || (x.name + ", San Francisco, CA"); });
+    var wp = names.slice(0, names.length - 1), dest = cfg.loop ? startObj().q : names[names.length - 1];
+    if (cfg.loop) wp = names.slice();
+    var tooMany = wp.length > 9; if (tooMany) wp = wp.slice(0, 9);
+    var anyMuni = sim.muniMin > 0;
+    var url = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(startObj().q) + "&destination=" + encodeURIComponent(dest) + (wp.length ? "&waypoints=" + encodeURIComponent(wp.join("|")) : "") + "&travelmode=" + (anyMuni ? "transit" : "walking");
+    var a = el("a", "btn row2", "Open in Google Maps"); a.href = url; a.target = "_blank"; a.rel = "noopener";
+    var shBtn = el("button", "btn ghost", "Share plan"); shBtn.type = "button";
+    shBtn.addEventListener("click", function () { sharePlan(items, sim, url); });
+    var wrap = el("p"); wrap.appendChild(a); wrap.appendChild(shBtn); tot.appendChild(wrap);
+    tot.appendChild(el("p", "fine", "Times are estimates: walking at 3 mph, street distance at 1.3 times straight-line, Muni with an 8 minute wait. Muni charges once per 90 minutes. Arrival times assume a typical visit at each stop. When the Google map is on, leg times come from Google Directions. Google Maps also shows live departures." + (tooMany ? " Google Maps takes at most 9 waypoints, so the link stops early." : "")));
+  }
+
+  function moveStop(i, d, focusId) {
+    var j = i + d; if (j < 0 || j >= state.route.length) return;
+    var t = state.route[i]; state.route[i] = state.route[j]; state.route[j] = t; refresh();
+    if (focusId) setTimeout(function () { var r = document.getElementById("row-" + focusId); if (r && r.focus) r.focus(); }, 0);
+  }
+
+  /* ---------- press and hold to reorder ---------- */
+  var dr = { timer: null, active: false, pid: null, row: null, li: null, items: [], tops: [], slots: [], i: 0, ni: 0, startY: 0, startScroll: 0, curY: 0, sx: 0, sy: 0, raf: 0 };
+  function scrollY() { return window.scrollY || window.pageYOffset || 0; }
+
+  function cancelPress() {
+    clearTimeout(dr.timer); dr.timer = null;
+    if (dr.row) dr.row.classList.remove("pressing");
+    if (!dr.active) { dr.pid = null; dr.row = null; dr.li = null; }
+  }
+
+  function place() {
+    var n = dr.items.length, sy = scrollY();
+    var dy = (dr.curY - dr.startY) + (sy - dr.startScroll);
+    var minDy = dr.tops[0] - dr.tops[dr.i];
+    var maxDy = (dr.tops[n - 1] + dr.slots[n - 1] - dr.slots[dr.i]) - dr.tops[dr.i];
+    dy = Math.max(minDy, Math.min(maxDy, dy));
+    dr.li.style.transform = "translateY(" + dy + "px)";
+    var center = dr.tops[dr.i] + dy + dr.slots[dr.i] / 2, ni = 0, k;
+    for (k = 0; k < n; k++) { if (k !== dr.i && dr.tops[k] + dr.slots[k] / 2 < center) ni++; }
+    dr.ni = ni;
+    var h = dr.slots[dr.i];
+    for (k = 0; k < n; k++) {
+      if (k === dr.i) continue;
+      var sh = 0;
+      if (dr.i < ni && k > dr.i && k <= ni) sh = -h;
+      else if (dr.i > ni && k >= ni && k < dr.i) sh = h;
+      dr.items[k].style.transform = sh ? "translateY(" + sh + "px)" : "";
+    }
+  }
+
+  function tick() {
+    if (!dr.active) return;
+    var vh = window.innerHeight || 600, bar = document.querySelector(".bar");
+    var topEdge = (bar ? bar.getBoundingClientRect().bottom : 0) + 56, botEdge = vh - 90, v = 0;
+    if (dr.curY < topEdge) v = -Math.min(22, (topEdge - dr.curY) / 4 + 4);
+    else if (dr.curY > botEdge) v = Math.min(22, (dr.curY - botEdge) / 4 + 4);
+    if (v) window.scrollBy(0, v);
+    place();
+    dr.raf = requestAnimationFrame(tick);
+  }
+
+  function activateDrag() {
+    dr.timer = null;
+    if (dr.pid == null || !dr.li) return;
+    var tl = document.getElementById("timeline");
+    var items = Array.prototype.filter.call(tl.children, function (c) { return c.querySelector(".stoprow"); });
+    var idx = items.indexOf(dr.li); if (idx < 0) { cancelPress(); return; }
+    var sy = scrollY();
+    dr.items = items; dr.i = idx; dr.ni = idx; dr.startScroll = sy; dr.startY = dr.curY;
+    dr.tops = items.map(function (c) { return c.getBoundingClientRect().top + sy; });
+    dr.slots = items.map(function (c, k) { return k < items.length - 1 ? dr.tops[k + 1] - dr.tops[k] : c.getBoundingClientRect().height + 6; });
+    dr.active = true;
+    dr.li.classList.add("dragging");
+    dr.row.classList.remove("pressing"); dr.row.classList.add("lifted");
+    try { dr.row.setPointerCapture(dr.pid); } catch (x) {}
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (x) {} }
+    document.body.classList.add("is-dragging");
+    tick();
+  }
+
+  function finishDrag(commit) {
+    clearTimeout(dr.timer); dr.timer = null;
+    if (!dr.active) { cancelPress(); return; }
+    cancelAnimationFrame(dr.raf); dr.active = false;
+    var from = dr.i, to = commit ? dr.ni : dr.i, n = dr.items.length, k;
+    var order = []; for (k = 0; k < n; k++) order.push(k);
+    order.splice(from, 1); order.splice(to, 0, from);
+    var pos = dr.tops[0], topOf = {};
+    order.forEach(function (idx) { topOf[idx] = pos; pos += dr.slots[idx]; });
+    var li = dr.li, row = dr.row;
+    li.classList.remove("dragging");
+    li.style.transform = "translateY(" + (topOf[from] - dr.tops[from]) + "px)";
+    row.classList.remove("lifted");
+    document.body.classList.remove("is-dragging");
+    dr.pid = null;
+    setTimeout(function () {
+      if (to !== from) { var r = state.route.slice(), m = r.splice(from, 1)[0]; r.splice(to, 0, m); state.route = r; }
+      dr.row = null; dr.li = null; dr.items = [];
+      refresh();
+    }, 230);
+  }
+
+  function setupDrag() {
+    var tl = document.getElementById("timeline");
+    tl.addEventListener("pointerdown", function (e) {
+      if (dr.active || dr.timer) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      var row = e.target.closest ? e.target.closest(".stoprow") : null;
+      if (!row || (e.target.closest && e.target.closest("button, a, input, select"))) return;
+      if (state.route.length < 2) return;
+      dr.pid = e.pointerId; dr.row = row; dr.li = row.parentNode;
+      dr.sx = e.clientX; dr.sy = e.clientY; dr.curY = e.clientY;
+      row.classList.add("pressing");
+      dr.timer = setTimeout(activateDrag, 320);
+    });
+    document.addEventListener("pointermove", function (e) {
+      if (dr.pid !== e.pointerId) return;
+      dr.curY = e.clientY;
+      if (!dr.active && dr.timer && Math.hypot(e.clientX - dr.sx, e.clientY - dr.sy) > 10) cancelPress();
+    });
+    document.addEventListener("pointerup", function (e) { if (dr.pid !== e.pointerId) return; if (dr.active) finishDrag(true); else cancelPress(); });
+    document.addEventListener("pointercancel", function (e) { if (dr.pid !== e.pointerId) return; if (dr.active) finishDrag(false); else cancelPress(); });
+    document.addEventListener("touchmove", function (e) { if ((dr.active || dr.timer) && e.cancelable) { if (dr.active) e.preventDefault(); } }, { passive: false });
+    document.addEventListener("keydown", function (e) { if (dr.active && e.key === "Escape") finishDrag(false); });
+    tl.addEventListener("contextmenu", function (e) { if (dr.active || dr.timer) e.preventDefault(); });
+  }
+
+  /* ---------- settings wiring ---------- */
+  function setupSettings() {
+    var sel = document.getElementById("startSel");
+    STARTS.forEach(function (s) { var o = el("option", "", s.label); o.value = s.id; sel.appendChild(o); });
+    var meOpt = el("option", "", "My current location"); meOpt.value = "me"; sel.appendChild(meOpt);
+    sel.value = state.cfg.start;
+    sel.addEventListener("change", function () {
+      if (sel.value === "me") {
+        if (myLoc) { state.cfg.start = "me"; gm.fitKey = ""; refresh(); return; }
+        if (!navigator.geolocation) { sel.value = state.cfg.start; showToast("Location isn't available on this device."); return; }
+        showToast("Finding you...");
+        navigator.geolocation.getCurrentPosition(function (p) {
+          myLoc = { id: "me", label: "My location", lat: p.coords.latitude, lng: p.coords.longitude, q: p.coords.latitude + "," + p.coords.longitude };
+          state.cfg.start = "me"; gm.fitKey = ""; refresh();
+        }, function () { sel.value = state.cfg.start; showToast("Couldn't get your location. Check the permission."); }, { enableHighAccuracy: true, timeout: 10000 });
+        return;
+      }
+      state.cfg.start = sel.value; gm.fitKey = ""; refresh();
+    });
+    var tinp = document.getElementById("startTime");
+    tinp.addEventListener("change", function () { state.cfg.startTime = tinp.value || "12:00"; refresh(); });
+    var mAuto = document.getElementById("modeAuto"), mWalk = document.getElementById("modeWalk"), lim = document.getElementById("limitField");
+    function setMode(m) {
+      state.cfg.mode = m;
+      mAuto.setAttribute("aria-pressed", m === "auto" ? "true" : "false");
+      mWalk.setAttribute("aria-pressed", m === "walk" ? "true" : "false");
+      lim.hidden = m === "walk"; refresh();
+    }
+    mAuto.addEventListener("click", function () { setMode("auto"); });
+    mWalk.addEventListener("click", function () { setMode("walk"); });
+    var r = document.getElementById("walkLimit"), rl = document.getElementById("walkLimitLbl");
+    function limLabel() { var v = parseFloat(r.value); rl.textContent = "Walk up to " + v.toFixed(1) + " mi per leg (about " + Math.round(v * WALK_MIN_PER_MI) + " min)"; }
+    r.addEventListener("input", limLabel);
+    r.addEventListener("change", function () { state.cfg.walkLimit = parseFloat(r.value); limLabel(); refresh(); });
+    document.getElementById("loopChk").addEventListener("change", function (e) { state.cfg.loop = e.target.checked; refresh(); });
+    document.getElementById("zoomFit").addEventListener("click", function () { state.zoom = "fit"; if (gm.ready) gmFit(false); else refresh(); });
+    document.getElementById("zoomCity").addEventListener("click", function () { state.zoom = "city"; if (gm.ready) gmFit(true); else refresh(); });
+    document.getElementById("keySave").addEventListener("click", function () {
+      var v = (document.getElementById("keyInput").value || "").trim();
+      if (!v) { gm.failed = "Paste a key first."; updateKeyBanner(); return; }
+      try { localStorage.setItem("sfdg:gmkey", v); } catch (e) {}
+      if (gm.failed || window.google) { location.reload(); } else { loadGoogle(v); }
+    });
+    document.getElementById("resetKey").addEventListener("click", function (e) {
+      e.preventDefault(); try { localStorage.removeItem("sfdg:gmkey"); } catch (x) {} location.reload();
+    });
+    document.getElementById("goStops").addEventListener("click", function () { setView("stops"); });
+  }
+
+  function buildDayChips(id) {
+    var wrap = document.getElementById(id); wrap.innerHTML = "";
+    DAYS.forEach(function (d, i) {
+      var b = el("button", "chip", i === TODAY ? "Today" : d); b.type = "button";
+      b.setAttribute("aria-label", DAYS_LONG[i] + (i === TODAY ? " (today)" : ""));
+      b.setAttribute("aria-pressed", i === state.cfg.day ? "true" : "false");
+      b.addEventListener("click", function () { setDay(i); });
+      wrap.appendChild(b);
+    });
+  }
+  function setDay(i) {
+    state.cfg.day = i; cmpCache.key = "";
+    buildDayChips("dayChips"); buildDayChips("dayChips2");
+    refresh();
+  }
+  function syncSettingsUI() {
+    var sel = document.getElementById("startSel"); sel.value = (state.cfg.start === "me" && !myLoc) ? "civic" : state.cfg.start;
+    document.getElementById("startTime").value = state.cfg.startTime;
+    document.getElementById("modeAuto").setAttribute("aria-pressed", state.cfg.mode === "auto" ? "true" : "false");
+    document.getElementById("modeWalk").setAttribute("aria-pressed", state.cfg.mode === "walk" ? "true" : "false");
+    document.getElementById("limitField").hidden = state.cfg.mode === "walk";
+    var r = document.getElementById("walkLimit"); r.value = state.cfg.walkLimit;
+    document.getElementById("walkLimitLbl").textContent = "Walk up to " + parseFloat(r.value).toFixed(1) + " mi per leg (about " + Math.round(parseFloat(r.value) * WALK_MIN_PER_MI) + " min)";
+    document.getElementById("loopChk").checked = !!state.cfg.loop;
+  }
+
+  document.getElementById("tabStops").addEventListener("click", function () { setView("stops"); });
+  document.getElementById("tabRoute").addEventListener("click", function () { setView("route"); });
+  document.getElementById("clear").addEventListener("click", function () { state.route = []; if (fs.open) fsSheetReset(); refresh(); });
+
+  var credit = document.getElementById("credit");
+  if (CONFIG.credit && CONFIG.credit.text) {
+    if (CONFIG.credit.url) { var ca = el("a", "", CONFIG.credit.text); ca.href = CONFIG.credit.url; ca.target = "_blank"; ca.rel = "noopener"; credit.appendChild(ca); }
+    else credit.textContent = CONFIG.credit.text;
+  }
+  var fromLink = restore();
+  buildChips(); buildStops(); setupSettings(); setupFs(); setupDrag();
+  buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
+  updateKeyBanner();
+  var k0 = currentKey(); if (k0) loadGoogle(k0);
+  refresh();
+  if (fromLink && state.route.length) setView("route");
+
+  window.__sfTest = { gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
+})();
+</script>
+</body>
+</html>
