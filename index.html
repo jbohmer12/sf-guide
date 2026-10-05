@@ -237,6 +237,19 @@
   .gmk.dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 11px; border-radius: 50%; background: #6B7585; border: 2px solid #fff; transform: translate(-50%, -50%); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
   .btn.row2 { display: inline-block; margin-right: 8px; }
 
+
+  /* Undo bar */
+  .undo { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 16px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; display: flex; align-items: center; gap: 16px; }
+  .undo.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .undo button { font: inherit; font-weight: 700; color: var(--bg); background: none; border: 0; text-decoration: underline; padding: 6px 2px; cursor: pointer; }
+
+
+  /* Hold-and-drag a pin */
+  .draghint { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 16px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; text-align: center; }
+  .draghint.show { opacity: 1; transform: translate(-50%, 0); }
+  .pdghost { position: fixed; z-index: 95; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); border: 3px solid #fff; display: grid; place-items: center; font: 800 16px var(--display); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38); pointer-events: none; transform: scale(1.12); }
+  .pd-src { opacity: 0.3; }
+
   .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
   .cheat h2 { font-family: var(--display); font-size: 1.3rem; margin: 0 0 8px; }
   .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
@@ -271,7 +284,7 @@
 
   <div class="rv" id="routeView" hidden>
     <h2>Map and route</h2>
-    <p class="hint" id="hoursHint">Tap Expand map to pan, zoom and tap pins.</p>
+    <p class="hint" id="hoursHint">Tap Expand map to pan, zoom and tap pins. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap.</p>
 
     <div class="empty" id="routeEmpty">
       <p>Add at least one stop to see it on the map.</p>
@@ -350,6 +363,8 @@
 
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="draghint" id="dragHint" aria-hidden="true"></div>
+<div class="undo" id="undo" role="status" aria-live="polite"><span id="undoText"></span><button type="button" id="undoBtn">Undo</button></div>
 <div class="mapfs" id="mapFs" role="dialog" aria-modal="true" aria-label="Interactive route map" hidden>
   <div class="mapfs-top"><strong>Route map</strong><button class="btn small" type="button" id="fsDone">Done</button></div>
   <div class="mapfs-body">
@@ -739,7 +754,7 @@
     }
     document.getElementById("tabRoute").textContent = items.length ? "Map and route (" + items.length + ")" : "Map and route";
     var dayName = DAYS_LONG[state.cfg.day] + (state.cfg.day === TODAY ? " (today)" : "");
-    document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ". Tap Expand map to pan, zoom and tap pins." + (gm.ready ? "" : " This is the built-in map, so pins are approximate and lines are straight.");
+    document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ". Tap Expand map to pan, zoom and tap pins. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap." + (gm.ready ? "" : " This is the built-in map, so pins are approximate and lines are straight.");
     if (state.view === "route") renderRoute(items, sim);
     if (fs.open) { if (gm.ready) fsSheetRender(sim); else fsRender(); }
     persist();
@@ -859,9 +874,34 @@
     if (!key || gm.loading || gm.ready) return;
     gm.loading = true; gm.failed = "";
     window.__gmInit = function () { gm.ready = true; gm.loading = false; makeMarkerClass(); updateKeyBanner(); refresh(); };
+    // Google reports the precise reason only in the console, so capture it to show a clear message.
+    if (!gm.errHooked) {
+      gm.errHooked = true;
+      var oe = console.error;
+      console.error = function () {
+        try {
+          var m = Array.prototype.join.call(arguments, " "), x = m.match(/Google Maps JavaScript API (?:error|warning): (\w+)/);
+          if (x && !gm.errCode) gm.errCode = x[1];
+        } catch (e) {}
+        return oe.apply(console, arguments);
+      };
+    }
     window.gm_authFailure = function () {
-      gm.failed = "Google rejected this key. Check that the Maps JavaScript API and Routes API are enabled and that the key allows this site.";
-      teardownGoogle(); updateKeyBanner(); refresh();
+      setTimeout(function () {
+        var site = location.origin + "/*", c = gm.errCode || "";
+        var why = {
+          ApiNotActivatedMapError: "The Maps JavaScript API isn't enabled in the Google Cloud project. Enable it, then reload.",
+          RefererNotAllowedMapError: "The key doesn't allow this site. In Website restrictions, add exactly: " + site,
+          BillingNotEnabledMapError: "Billing isn't turned on for the Google Cloud project. Link a billing account, then reload.",
+          InvalidKeyMapError: "Google doesn't recognize this key. Check that it was copied in full.",
+          ApiTargetBlockedMapError: "The key's API restrictions don't include the Maps JavaScript API. Add it, then reload.",
+          RequestDeniedMapError: "Google denied the request. Check the key's restrictions and enabled APIs.",
+          ExpiredKeyMapError: "This key has expired.",
+          MissingKeyMapError: "No key was provided."
+        }[c];
+        gm.failed = (why || "Google rejected this key. Check that the Maps JavaScript API and Routes API are enabled and that the key allows this site.") + (c ? " (" + c + ")" : "");
+        teardownGoogle(); updateKeyBanner(); refresh();
+      }, 80);
     };
     var sc = document.createElement("script");
     sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__gmInit&v=weekly&libraries=routes";
@@ -989,20 +1029,123 @@
     var prev = st;
     sim.rows.forEach(function (r) { addLine(prev, r.it, r.leg.mode); prev = r.it; });
     if (cfg.loop && sim.back) addLine(prev, st, sim.back.leg.mode);
-    function mk(cls, text, pos, title, onclick) {
+    function mk(cls, text, pos, title, onclick, holdId, addId) {
       var d = document.createElement("div"); d.className = "gmk " + cls; d.textContent = text || ""; if (title) d.title = title;
       google.maps.OverlayView.preventMapHitsAndGesturesFrom(d);
-      d.addEventListener("click", onclick);
+      if (holdId) d.setAttribute("data-go", holdId);
+      if (addId) d.setAttribute("data-add", addId);
+      if (holdId) bindHold(d, holdId, onclick); else d.addEventListener("click", onclick);
       var m = new gm.Marker(pos, d); m.setMap(map); gm.overlays.push(m);
     }
-    ITEMS.forEach(function (it) { if (state.route.indexOf(it.id) < 0) mk("dot", "", it, it.name, function () { onMapTap("add", it.id); }); });
+    ITEMS.forEach(function (it) { if (state.route.indexOf(it.id) < 0) mk("dot", "", it, it.name, function () { onMapTap("add", it.id); }, null, it.id); });
     mk("start", "S", st, "Start: " + st.label, function () { onMapTap("start"); });
     sim.rows.forEach(function (r, i) {
       var bad = r.issues.some(function (x) { return x.hard; });
-      mk("pin" + (bad ? " bad" : ""), String(i + 1), r.it, r.it.name, function () { onMapTap("go", r.it.id); });
+      mk("pin" + (bad ? " bad" : ""), String(i + 1), r.it, r.it.name, function () { onMapTap("go", r.it.id); }, r.it.id);
     });
     var fk = state.route.join(",") + "|" + state.cfg.start;
     if (gm.fitKey !== fk) { gm.fitKey = fk; gmFit(false); }
+  }
+
+  /* ---------- hold a pin: remove, swap or move a stop ---------- */
+  var HOLD_MS = 420, undoT, undoFn = null;
+  var pd = { active: false, id: null, sx: 0, sy: 0, moved: false, ghost: null, gx: 0, gy: 0 };
+  function hideUndo() { document.getElementById("undo").classList.remove("show"); undoFn = null; }
+  function showUndo(msg, fn) {
+    var u = document.getElementById("undo"); undoFn = fn;
+    document.getElementById("undoText").textContent = msg;
+    requestAnimationFrame(function () { u.classList.add("show"); });
+    clearTimeout(undoT); undoT = setTimeout(hideUndo, 6000);
+  }
+  function showHint(text) { var h = document.getElementById("dragHint"); h.textContent = text; requestAnimationFrame(function () { h.classList.add("show"); }); }
+  function hideHint() { document.getElementById("dragHint").classList.remove("show"); }
+  function buzz(p) { if (navigator.vibrate) { try { navigator.vibrate(p); } catch (x) {} } }
+  function changeRoute(next, msg) {
+    var snap = state.route.slice();
+    state.route = next; fs.sheet = null; refresh();
+    showUndo(msg, function () { state.route = snap; refresh(); });
+  }
+  function removeStop(id) {
+    var i = state.route.indexOf(id); if (i < 0) return;
+    buzz([10, 40, 10]);
+    var next = state.route.slice(); next.splice(i, 1);
+    changeRoute(next, "Removed " + byId[id].name);
+  }
+  function replaceStop(oldId, newId) {
+    var i = state.route.indexOf(oldId); if (i < 0 || state.route.indexOf(newId) >= 0) return;
+    buzz(15);
+    var next = state.route.slice(); next[i] = newId;
+    changeRoute(next, "Swapped in " + byId[newId].name);
+  }
+  function swapStops(aId, bId) {
+    var a = state.route.indexOf(aId), b = state.route.indexOf(bId); if (a < 0 || b < 0 || a === b) return;
+    buzz(15);
+    var next = state.route.slice(); next[a] = bId; next[b] = aId;
+    changeRoute(next, "Swapped stops " + (a + 1) + " and " + (b + 1));
+  }
+
+  function pdTarget() {
+    if (!pd.ghost || !document.elementFromPoint) return null;
+    pd.ghost.style.display = "none";
+    var el = document.elementFromPoint(pd.gx, pd.gy);
+    pd.ghost.style.display = "";
+    var t = el && el.closest ? el.closest("[data-go],[data-add]") : null;
+    if (!t) return null;
+    var go = t.getAttribute("data-go"), add = t.getAttribute("data-add");
+    if (go && go !== pd.id) return { kind: "stop", id: go };
+    if (add) return { kind: "add", id: add };
+    return null;
+  }
+  function pdBegin(id, x, y) {
+    if (pd.active) return;
+    pd.active = true; pd.id = id; pd.sx = x; pd.sy = y; pd.gx = x; pd.gy = y - 30; pd.moved = false;
+    var g = document.createElement("div"); g.className = "pdghost"; g.textContent = String(state.route.indexOf(id) + 1);
+    g.style.left = pd.gx + "px"; g.style.top = pd.gy + "px"; document.body.appendChild(g); pd.ghost = g;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-go="' + id + '"]'), function (n) { n.classList.add("pd-src"); });
+    buzz(12); showHint("Drag to swap or move. Let go to remove.");
+  }
+  function pdMove(x, y) {
+    if (!pd.active) return;
+    pd.gx = x; pd.gy = y - 30; pd.ghost.style.left = pd.gx + "px"; pd.ghost.style.top = pd.gy + "px";
+    if (!pd.moved && Math.hypot(x - pd.sx, y - pd.sy) > 12) pd.moved = true;
+    if (!pd.moved) return;
+    var t = pdTarget();
+    if (t && t.kind === "add") showHint("Let go to swap in " + byId[t.id].name);
+    else if (t) showHint("Let go to swap places with " + byId[t.id].name);
+    else showHint("Drop on a dot or another stop. Let go elsewhere to cancel.");
+  }
+  function pdEnd(x, y, cancelled) {
+    if (!pd.active) return;
+    var t = (pd.moved && !cancelled) ? pdTarget() : null, id = pd.id, moved = pd.moved;
+    pd.active = false;
+    if (pd.ghost && pd.ghost.parentNode) pd.ghost.parentNode.removeChild(pd.ghost);
+    pd.ghost = null; hideHint();
+    Array.prototype.forEach.call(document.querySelectorAll(".pd-src"), function (n) { n.classList.remove("pd-src"); });
+    if (cancelled) return;
+    if (!moved) { removeStop(id); return; }
+    if (t && t.kind === "add") replaceStop(id, t.id);
+    else if (t && t.kind === "stop") swapStops(id, t.id);
+  }
+  function bindHold(el, id, onTap) {
+    var t = null, fired = false, sx = 0, sy = 0, pid = null;
+    function clear() { clearTimeout(t); t = null; }
+    el.addEventListener("pointerdown", function (e) {
+      fired = false; sx = e.clientX; sy = e.clientY; pid = e.pointerId; clear();
+      t = setTimeout(function () { t = null; fired = true; try { el.setPointerCapture(pid); } catch (x) {} pdBegin(id, sx, sy); }, HOLD_MS);
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (pd.active && e.pointerId === pid) { pdMove(e.clientX, e.clientY); return; }
+      if (t && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clear();
+    });
+    el.addEventListener("pointerup", function (e) { if (pd.active && e.pointerId === pid) pdEnd(e.clientX, e.clientY, false); else clear(); });
+    el.addEventListener("pointercancel", function (e) { if (pd.active && e.pointerId === pid) pdEnd(e.clientX, e.clientY, true); clear(); });
+    el.addEventListener("pointerleave", function () { if (!pd.active) clear(); });
+    el.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    el.addEventListener("click", function (e) { if (fired) { fired = false; e.preventDefault(); e.stopPropagation(); return; } onTap(e); });
+  }
+  function setupPd() {
+    document.addEventListener("touchmove", function (e) { if (pd.active && e.cancelable) e.preventDefault(); }, { passive: false });
+    document.addEventListener("keydown", function (e) { if (pd.active && e.key === "Escape") pdEnd(0, 0, true); });
   }
 
   /* ---------- map ---------- */
@@ -1069,7 +1212,7 @@
     box.innerHTML = svgString(sim, items, vb, box.clientWidth || 360);
     Array.prototype.forEach.call(box.querySelectorAll("[data-add]"), function (g) { g.addEventListener("click", function () { toggle(g.getAttribute("data-add")); }); });
     Array.prototype.forEach.call(box.querySelectorAll("[data-go]"), function (g) {
-      g.addEventListener("click", function () {
+      bindHold(g, g.getAttribute("data-go"), function () {
         var row = document.getElementById("row-" + g.getAttribute("data-go"));
         if (row) { if (row.scrollIntoView) row.scrollIntoView({ behavior: "smooth", block: "center" }); row.classList.add("flash"); setTimeout(function () { row.classList.remove("flash"); }, 1400); }
       });
@@ -1175,7 +1318,12 @@
       if (n === 1) {
         var tgt = e.target && e.target.closest ? e.target.closest("[data-go],[data-add],[data-start]") : null;
         fs.g = { mode: "pan", sx: e.clientX, sy: e.clientY, vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, moved: false, tgt: tgt };
+        if (tgt && tgt.getAttribute("data-go")) {
+          var holdId = tgt.getAttribute("data-go"), gg = fs.g;
+          gg.timer = setTimeout(function () { gg.timer = null; if (fs.g === gg && !gg.moved) { gg.long = true; fs.sheet = null; pdBegin(holdId, gg.sx, gg.sy); } }, HOLD_MS);
+        }
       } else if (n === 2) {
+        if (fs.g && fs.g.timer) { clearTimeout(fs.g.timer); fs.g.timer = null; }
         var k = Object.keys(fs.ptrs), a = fs.ptrs[k[0]], b = fs.ptrs[k[1]], r = fsRect();
         var kk = fs.vb.w / r.width, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
         fs.g = { mode: "pinch", d0: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, ax: fs.vb.x + (mx - r.left) * kk, ay: fs.vb.y + (my - r.top) * kk, moved: true };
@@ -1184,11 +1332,12 @@
     fsMap.addEventListener("pointermove", function (e) {
       if (!fs.ptrs[e.pointerId] || !fs.g) return;
       fs.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (fs.g.long) { pdMove(e.clientX, e.clientY); return; }
       var r = fsRect(), g = fs.g;
       if (g.mode === "pan" && ptrCount() === 1) {
         var dx = e.clientX - g.sx, dy = e.clientY - g.sy;
         if (!g.moved && Math.hypot(dx, dy) < 6) return;
-        g.moved = true;
+        g.moved = true; if (g.timer) { clearTimeout(g.timer); g.timer = null; }
         var k = g.vb0.w / r.width;
         fs.vb.x = g.vb0.x - dx * k; fs.vb.y = g.vb0.y - dy * k;
         fsApplyVb();
@@ -1207,7 +1356,9 @@
       var n = ptrCount(), g = fs.g;
       if (n === 0) {
         fs.g = null;
-        if (g && g.mode === "pan" && !g.moved) fsHandleTap(g.tgt);
+        if (g && g.timer) { clearTimeout(g.timer); g.timer = null; }
+        if (g && g.long) { pdEnd(e.clientX, e.clientY, e.type === "pointercancel"); }
+        else if (g && g.mode === "pan" && !g.moved) fsHandleTap(g.tgt);
         else fsRender();
       } else if (n === 1 && g && g.mode === "pinch") {
         var k = Object.keys(fs.ptrs)[0];
@@ -1228,6 +1379,7 @@
     document.getElementById("fsFit").addEventListener("click", function () { if (gm.ready) gmFit(false); else fsFitTo(false); });
     document.getElementById("fsCity").addEventListener("click", function () { if (gm.ready) gmFit(true); else fsFitTo(true); });
     document.getElementById("fsDone").addEventListener("click", fsClose);
+    document.getElementById("undoBtn").addEventListener("click", function () { if (undoFn) { var f = undoFn; hideUndo(); f(); } });
     document.addEventListener("keydown", function (e) { if (fs.open && e.key === "Escape") fsClose(); });
     window.addEventListener("resize", function () { if (fs.open) fsRender(); });
     document.getElementById("expandMap").addEventListener("click", fsOpen);
@@ -1559,7 +1711,7 @@
     else credit.textContent = CONFIG.credit.text;
   }
   var fromLink = restore();
-  buildChips(); buildStops(); setupSettings(); setupFs(); setupDrag();
+  buildChips(); buildStops(); setupSettings(); setupFs(); setupDrag(); setupPd();
   buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
   updateKeyBanner();
   var k0 = currentKey(); if (k0) loadGoogle(k0);
