@@ -1,1 +1,1 @@
-window.SF_GUIDE_KEY = "AIzaSyBm1SO7JM_wvYATmnuzqjXipAa7zw0hcbY";
+window.SF_GUIDE_KEY = "AIzaSyB6Bbp2Nc8NxKXcpZDBcR4bkCEdB8Qybes";
