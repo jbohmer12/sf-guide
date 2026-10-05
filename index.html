@@ -7,11 +7,12 @@
   SF DAY GUIDE (Google Maps edition)
 
   To switch on the Google map:
-  1. In Google Cloud Console, create a project and attach a billing account (Google gives a monthly free credit).
-  2. Enable "Maps JavaScript API" and "Directions API".
-  3. Create an API key, then restrict it: Application restrictions -> Websites, and add your site (for example https://yourname.github.io/*).
-  4. Paste the key into CONFIG.googleMapsApiKey below, or paste it into the box on the Map and route tab (it is saved on that device only).
-  With no key, the page still works and shows a built-in schematic map.
+  1. In Google Cloud Console, create a project and attach a billing account (Google gives a monthly free allowance).
+  2. Enable "Maps JavaScript API" and "Routes API".
+  3. Create an API key and restrict it: Application restrictions -> Websites (add your site, for example https://yourname.github.io/*), and API restrictions -> Maps JavaScript API + Routes API.
+  4. Put the key in a file named config.js next to this page, containing exactly:   window.SF_GUIDE_KEY = "YOUR_KEY";
+     (or paste it into the box on the Map and route tab, which saves it on that device only).
+  A website-restricted key is meant to be public. With no key, the page still works and shows a built-in schematic map.
 -->
 <title>SF day guide: records, beer, house music</title>
 <meta name="description" content="A San Francisco day planner for record shops, breweries, house music and art. Pick stops, compare routes and see hours.">
@@ -369,10 +370,11 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
 (function () {
   var CONFIG = {
-    googleMapsApiKey: "",   // paste a key here, or use the box on the Map and route tab
+    googleMapsApiKey: (typeof window.SF_GUIDE_KEY === "string" ? window.SF_GUIDE_KEY : ""),   // set in config.js, or use the box on the Map and route tab
     credit: { text: "Designed and built by Joaquin", url: "https://joaquinboehmer.framer.website" }
   };
   var FARE = 2.75, STREET = 1.3, WALK_MIN_PER_MI = 20, TRANSFER_MIN = 90;
@@ -858,11 +860,11 @@
     gm.loading = true; gm.failed = "";
     window.__gmInit = function () { gm.ready = true; gm.loading = false; makeMarkerClass(); updateKeyBanner(); refresh(); };
     window.gm_authFailure = function () {
-      gm.failed = "Google rejected this key. Check that the Maps JavaScript API and Directions API are enabled and that the key allows this site.";
+      gm.failed = "Google rejected this key. Check that the Maps JavaScript API and Routes API are enabled and that the key allows this site.";
       teardownGoogle(); updateKeyBanner(); refresh();
     };
     var sc = document.createElement("script");
-    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__gmInit&v=weekly";
+    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__gmInit&v=weekly&libraries=routes";
     sc.async = true;
     sc.onerror = function () { gm.loading = false; gm.failed = "Couldn't load Google Maps. Check your connection and try again."; updateKeyBanner(); };
     document.head.appendChild(sc);
@@ -911,18 +913,45 @@
     var key = legKey(a, b, mode); if (legCache[key] || gm.pending[key]) return;
     gm.pending[key] = true; gm.queue.push({ key: key, a: a, b: b, mode: mode }); pump();
   }
+  function legacyLeg(j, o, d) {
+    return new Promise(function (resolve, reject) {
+      if (!google.maps.DirectionsService) { reject(new Error("no directions")); return; }
+      if (!gm.svc) gm.svc = new google.maps.DirectionsService();
+      var req = { origin: o, destination: d, travelMode: j.mode === "walk" ? "WALKING" : "TRANSIT" };
+      if (j.mode !== "walk") req.transitOptions = { departureTime: departDate() };
+      gm.svc.route(req, function (res, status) {
+        if (status === "OK" && res && res.routes && res.routes[0]) {
+          var lg = res.routes[0].legs[0];
+          resolve({ ok: true, path: res.routes[0].overview_path, min: Math.ceil(lg.duration.value / 60) + (j.mode === "walk" ? 0 : 4), mi: lg.distance.value / 1609.34 });
+        } else reject(new Error(String(status)));
+      });
+    });
+  }
+  function fetchLeg(j) {
+    var o = { lat: j.a.lat, lng: j.a.lng }, d = { lat: j.b.lat, lng: j.b.lng };
+    return Promise.resolve().then(function () {
+      return google.maps.importLibrary ? google.maps.importLibrary("routes") : google.maps.routes;
+    }).then(function (lib) {
+      if (lib && lib.Route && lib.Route.computeRoutes) {
+        var req = { origin: o, destination: d, travelMode: j.mode === "walk" ? "WALKING" : "TRANSIT", fields: ["path", "distanceMeters", "durationMillis"] };
+        if (j.mode !== "walk") req.departureTime = departDate();
+        return lib.Route.computeRoutes(req).then(function (res) {
+          var rt = res && res.routes && res.routes[0];
+          if (!rt) throw new Error("no route");
+          var path = (rt.path || []).map(function (p) { return { lat: typeof p.lat === "function" ? p.lat() : p.lat, lng: typeof p.lng === "function" ? p.lng() : p.lng }; });
+          return { ok: true, path: path, min: Math.ceil(rt.durationMillis / 60000) + (j.mode === "walk" ? 0 : 4), mi: rt.distanceMeters / 1609.34 };
+        });
+      }
+      return legacyLeg(j, o, d);
+    }).catch(function () {
+      return legacyLeg(j, o, d).catch(function () { return { ok: false }; });
+    });
+  }
   function pump() {
     if (gm.busy || !gm.queue.length || !gm.ready) return;
     gm.busy = true;
     var j = gm.queue.shift();
-    if (!gm.svc) gm.svc = new google.maps.DirectionsService();
-    var req = { origin: { lat: j.a.lat, lng: j.a.lng }, destination: { lat: j.b.lat, lng: j.b.lng }, travelMode: j.mode === "walk" ? "WALKING" : "TRANSIT" };
-    if (j.mode !== "walk") req.transitOptions = { departureTime: departDate() };
-    gm.svc.route(req, function (res, status) {
-      if (status === "OK" && res && res.routes && res.routes[0]) {
-        var lg = res.routes[0].legs[0];
-        legCache[j.key] = { ok: true, path: res.routes[0].overview_path, min: Math.ceil(lg.duration.value / 60) + (j.mode === "walk" ? 0 : 4), mi: lg.distance.value / 1609.34 };
-      } else { legCache[j.key] = { ok: false, status: status }; }
+    fetchLeg(j).then(function (r) { legCache[j.key] = r; }, function () { legCache[j.key] = { ok: false }; }).then(function () {
       delete gm.pending[j.key]; legVer++; gm.busy = false;
       clearTimeout(gm.rt); gm.rt = setTimeout(refresh, 150);
       setTimeout(pump, 220);
