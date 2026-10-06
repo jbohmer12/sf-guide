@@ -328,6 +328,10 @@
   .swt input:focus-visible + .swtrack { outline: 3px solid var(--accent); outline-offset: 2px; }
   .swst { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
   .mapfs-top .swt { margin-left: auto; margin-right: 12px; }
+
+  /* Keep the first visible section clear of the sticky bar */
+  main section { scroll-margin-top: calc(var(--barh, 190px) + env(safe-area-inset-top, 0px) + 6px); }
+  html, body { overflow-anchor: none; }
   .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
   .cheat h2 { font-family: var(--display); font-size: 1.3rem; margin: 0 0 8px; }
   .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
@@ -534,6 +538,7 @@
     { id: "records", label: "Records", note: "Browsing is free. Used LPs are often $5-25 and new 12-inches $20-35 (my estimate)." },
     { id: "beer", label: "Bars and beer", note: "Costs below assume one drink each." },
     { id: "food", label: "Coffee and quick eats", note: "Rough costs for a coffee, a pastry or a quick meal." },
+    { id: "dine", label: "Sit-down dinners", note: "Picked using OpenTable: ratings of 4.5 or higher with roughly 100 to 1,000 reviews, in neighborhoods rather than tourist hubs. Places with many thousands of reviews are usually the famous or tourist-heavy ones, so they are left out. Numbers were checked in early Oct 2026 and they change." },
     { id: "music", label: "House music", note: "Cover varies, so it is not in the tally. One Halcyon reviewer paid $50." },
     { id: "art", label: "Art", note: "Museums, design and street murals. Check each status line for that day." },
     { id: "tech", label: "Tech", note: "Walk-in spots with no RSVP needed. Most Tech Week events need approval, so they are left out. The Computer History Museum is in Mountain View (closed Mon and Tue) if you want a day trip." },
@@ -630,7 +635,14 @@
     { id: "sohn", cat: "work", name: "SOHN", where: "3rd St, Dogpatch", blurb: "A big, bright Korean cafe with free Wi-Fi and plenty of outlets, per reviewers. Seating on two floors.", entry: 8, entryLabel: "A drink about $6-8 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75732, lng: -122.38794, dwell: 90, q: "SOHN, 2535 3rd St, San Francisco, CA", hrs: [N,[9,16],[9,16],N,[9,16],[9,16],[9,16]] },
     { id: "third-wheel", cat: "work", name: "Third Wheel Coffee", where: "Oak St, near the Panhandle", blurb: "A small coffee bar with outdoor benches that have outlets, per a reviewer. Lines at peak times.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.77323, lng: -122.43559, dwell: 45, q: "Third Wheel Coffee, 991 Oak St, San Francisco, CA", hrs: R([7,15]) },
     { id: "birdcage", cat: "work", name: "The Birdcage", where: "Sutter St, Lower Nob Hill", blurb: "A cafe that shows local art and sells vinyl and shirts. Reviewers call it a good spot to read or work.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "Muni $2.75, or a 16 min walk", lat: 37.78868, lng: -122.41393, dwell: 60, q: "The Birdcage, 816 Sutter St, San Francisco, CA", hrs: [N,[9,17],[9,14],[9,17],[8.5,17],[8.5,14],[9,14]] },
-    { id: "adan-cafe", cat: "work", name: "Adan Cafe", where: "Mason St, near Union Square", blurb: "Open until 9pm, with Yemeni coffee and tea. A visitor found it a good place to work. On the edge of the Tenderloin, so best in daytime.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "13 min walk", lat: 37.78474, lng: -122.40919, dwell: 60, q: "Adan Cafe, 120 Mason St, San Francisco, CA", hrs: R([7,21]) }
+    { id: "adan-cafe", cat: "work", name: "Adan Cafe", where: "Mason St, near Union Square", blurb: "Open until 9pm, with Yemeni coffee and tea. A visitor found it a good place to work. On the edge of the Tenderloin, so best in daytime.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "13 min walk", lat: 37.78474, lng: -122.40919, dwell: 60, q: "Adan Cafe, 120 Mason St, San Francisco, CA", hrs: R([7,21]) },
+    { id: "dancing-yak", cat: "dine", name: "Dancing Yak", where: "Valencia St, Mission", blurb: "Nepali and Himalayan comfort food: momos, curries and thalis. OpenTable 4.8 from 385 reviews.", entry: 25, entryLabel: "Mains about $18-26 (estimate)", transitLabel: "Muni $2.75, or a 17 min walk", lat: 37.76853, lng: -122.42254, dwell: 75, q: "Dancing Yak, 280 Valencia St, San Francisco, CA", hrs: R([11.5,21.5]) },
+    { id: "base-camp", cat: "dine", name: "Base Camp", where: "Folsom St, Mission", blurb: "A Nepali kitchen known for momos, chow mein and goat curry. OpenTable 4.8 from 357 reviews.", entry: 25, entryLabel: "Mains about $18-24 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75879, lng: -122.41493, dwell: 75, q: "Base Camp, 2400 Folsom St, San Francisco, CA", hrs: [[12,21],[12,21],[12,21],[12,21],[12,22],[12,22],[12,21]], note: "Closed 3-5pm daily" },
+    { id: "destapas", cat: "dine", name: "Destapas SF", where: "24th St, Mission", blurb: "Spanish tapas, paella and sangria. OpenTable 4.7 from 210 reviews; Google reviewers are more mixed.", entry: 35, entryLabel: "Tapas and a drink about $30-40 (estimate)", transitLabel: "Muni or BART, about $3 each way", lat: 37.75311, lng: -122.40686, dwell: 75, q: "Destapas SF, 2708 24th St, San Francisco, CA", hrs: [[11,21],[11,21],[11,21],[11,21],[11,21],[13,21],N] },
+    { id: "uva-enoteca", cat: "dine", name: "Uva Enoteca", where: "Haight St", blurb: "Southern Italian from Puglia, with imported ingredients and a big wine list. OpenTable 4.7 from 933 reviews. Steps from Vinyl Dreams.", entry: 40, entryLabel: "Dinner about $35-45 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.7721, lng: -122.4316, dwell: 90, q: "Uva Enoteca, 568 Haight St, San Francisco, CA", hrs: [[17.5,21],[17.5,21],[17.5,21],[17.5,21],[17,21.5],[17,21.5],[17,20.5]] },
+    { id: "tacolicious", cat: "dine", name: "Tacolicious", where: "Valencia St, Mission", blurb: "Tacos, chips and salsa, and coconut margaritas in a lively room. OpenTable 4.5 from 137 reviews.", entry: 25, entryLabel: "Tacos and a drink about $22-28 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76098, lng: -122.42137, dwell: 60, q: "Tacolicious, 741 Valencia St, San Francisco, CA", hrs: [[11.5,21.5],[11.5,21.5],[11.5,21.5],[11.5,21.5],[11.5,23],[11.5,23],[11.5,21]] },
+    { id: "horsefeather", cat: "dine", name: "Horsefeather", where: "Divisadero St, NoPa", blurb: "Burgers, duck-fat fries and cocktails, with a garden patio. Open late. OpenTable 4.7 from 152 reviews.", entry: 30, entryLabel: "Dinner about $25-35 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.7745, lng: -122.43746, dwell: 75, q: "Horsefeather, 528 Divisadero St, San Francisco, CA", hrs: [[14,24],[14,24],[14,24],[14,24],[14,26],[11,26],[11,24]] },
+    { id: "beretta-valencia", cat: "dine", name: "Beretta", where: "Valencia St, Mission", blurb: "Pizza, pasta and cocktails, a neighborhood staple since 2008. OpenTable 4.6 from 188 reviews. Loud when busy, so go early.", entry: 45, entryLabel: "App and main about $40-50 per a reviewer", transitLabel: "Muni $2.75 each way", lat: 37.75386, lng: -122.42063, dwell: 75, q: "Beretta, 1199 Valencia St, San Francisco, CA", hrs: [[17,22],[17,22],[17,22],[17,22],[17,23.5],[11,23.5],[11,22]] }
   ];
 
   var byId = {};
@@ -910,11 +922,16 @@
       Array.prototype.forEach.call(wrap.children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-cat") === state.mapFilter ? "true" : "false"); });
     });
   }
-  // After picking a category, jump back to the start of the list if the page is scrolled down.
+  // After picking a category, bring the first section into view just below the sticky bar.
+  function setBarH() { var bar = document.querySelector(".bar"); if (bar) document.documentElement.style.setProperty("--barh", bar.offsetHeight + "px"); }
   function scrollListTop() {
-    var y = window.scrollY || window.pageYOffset || 0, bar = document.querySelector(".bar");
-    var top = Math.max(0, main.getBoundingClientRect().top + y - (bar ? bar.offsetHeight : 0) - 8);
-    if (y > top + 2) { try { window.scrollTo({ top: top, behavior: "smooth" }); } catch (e) { window.scrollTo(0, top); } }
+    setBarH();
+    var bar = document.querySelector(".bar"), barH = bar ? bar.offsetHeight : 0;
+    function go() {
+      var first = main.querySelector("section:not([hidden])"); if (!first) return;
+      if (first.getBoundingClientRect().top < barH) first.scrollIntoView({ block: "start", behavior: "auto" });
+    }
+    go(); setTimeout(go, 60); setTimeout(go, 220);
   }
   function buildChips() {
     var opts = [{ id: "all", label: "All" }].concat(CATS);
@@ -2151,7 +2168,7 @@
   var fromLink = restore();
   renderNotes();
   fsEl.hidden = true; document.body.style.overflow = "";
-  buildChips(); buildMapChips(); buildStops(); setupSettings(); setupFs(); setupDrag(); setupPd();
+  buildChips(); buildMapChips(); buildStops(); setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd();
   buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
   updateKeyBanner();
   var k0 = currentKey(); if (k0 && !SAFE) loadGoogle(k0);
