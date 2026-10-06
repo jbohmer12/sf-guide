@@ -371,29 +371,8 @@
 
   <div class="rv" id="routeView" hidden>
     <h2>Map and route</h2>
-    <p class="hint" id="hoursHint">Tap Expand map to pan, zoom and tap pins. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap.</p>
-    <div class="alongbox" id="alongBox">
-      <div class="field"><label for="destSel">Last stop</label><select id="destSel"></select></div>
-      <div id="alongCtl" hidden>
-        <div class="field"><span class="lbl" id="alongLbl">Stops along the way</span><div class="seg" id="alongCount" role="group" aria-labelledby="alongLbl"></div></div>
-        <div class="field"><span class="lbl" id="alongCatLbl">Include</span><div class="chips" id="alongCats" role="group" aria-labelledby="alongCatLbl"></div></div>
-        <div class="alongbtns"><button class="btn" id="alongGo" type="button">Fill my route</button><button class="btn ghost" id="alongShuffle" type="button">Try different stops</button></div>
-        <p class="hint" id="alongNote" role="status" style="margin: 10px 0 0;"></p>
-      </div>
-    </div>
-
-    <div class="empty" id="routeEmpty">
-      <p>Add at least one stop to see it on the map.</p>
-      <button class="btn" type="button" id="goStops">Pick stops</button>
-    </div>
-
+    <p class="hint" id="hoursHint">Hours shown for today.</p>
     <div id="routeBody" hidden>
-      <div class="keybox" id="keyBox" hidden>
-        <strong>Switch on the Google map</strong>
-        <p>Paste a Google Maps API key to draw the route on Google Maps with real street paths and live travel times. It stays on this device. Until then you get the built-in map.</p>
-        <div class="keyrow"><input id="keyInput" type="text" placeholder="Google Maps API key" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Google Maps API key"><button class="btn small" type="button" id="keySave">Save</button></div>
-        <p class="err" id="keyMsg" hidden></p>
-      </div>
       <div class="maptools">
         <button class="btn small" type="button" id="expandMap">Expand map</button>
         <button class="btn ghost small" type="button" id="zoomFit">Fit my route</button>
@@ -410,6 +389,26 @@
         <span><i class="sw warn"></i>Timing problem</span>
         <span><i class="sw dot"></i>Tap a gray dot to add it</span>
       </div>
+
+      <p class="hint" id="mapTips" style="margin: 10px 0 0;">Tap Expand map to pan and zoom. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap. On the built-in map, pins are approximate and lines are straight.</p>
+      <p class="hint" id="routeEmpty" style="margin: 8px 0 0;">No stops yet. Tap a gray dot to add one, or <button type="button" class="linkbtn" id="goStops" style="padding: 0;">browse the list</button>.</p>
+
+      <div class="keybox" id="keyBox" hidden>
+        <strong>Google map is off</strong>
+        <p>Paste a Google Maps API key to switch it on. It stays on this device.</p>
+        <div class="keyrow"><input id="keyInput" type="text" placeholder="Google Maps API key" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Google Maps API key"><button class="btn small" type="button" id="keySave">Save</button></div>
+        <p class="err" id="keyMsg" hidden></p>
+      </div>
+
+    <div class="alongbox" id="alongBox">
+      <div class="field"><label for="destSel">Last stop</label><select id="destSel"></select></div>
+      <div id="alongCtl" hidden>
+        <div class="field"><span class="lbl" id="alongLbl">Stops along the way</span><div class="seg" id="alongCount" role="group" aria-labelledby="alongLbl"></div></div>
+        <div class="field"><span class="lbl" id="alongCatLbl">Include</span><div class="chips" id="alongCats" role="group" aria-labelledby="alongCatLbl"></div></div>
+        <div class="alongbtns"><button class="btn" id="alongGo" type="button">Fill my route</button><button class="btn ghost" id="alongShuffle" type="button">Try different stops</button></div>
+        <p class="hint" id="alongNote" role="status" style="margin: 10px 0 0;"></p>
+      </div>
+    </div>
 
       <div class="notebox" id="notesBox" hidden>
         <h3>Local notes</h3>
@@ -443,6 +442,7 @@
         <label class="check"><input type="checkbox" id="loopChk"> End back at the start</label>
       </details>
 
+      <div id="routeOnly">
       <h3>Compare orders</h3>
       <p class="hint">Fastest and cheapest are searched for you. Closed stops and missed opening hours count against an order.</p>
       <div class="cmp" id="cmp"></div>
@@ -451,6 +451,7 @@
       <p class="hint">Press and hold a stop, then drag it up or down to reorder.</p>
       <ol class="tl" id="timeline"></ol>
       <div class="totals" id="totals"></div>
+      </div>
     </div>
   </div>
 
@@ -1019,7 +1020,7 @@
     document.getElementById("clear").disabled = !items.length;
     document.getElementById("tabRoute").textContent = items.length ? "Map and route (" + items.length + ")" : "Map and route";
     var dayName = DAYS_LONG[state.cfg.day] + (state.cfg.day === TODAY ? " (today)" : "");
-    document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ". Tap Expand map to pan, zoom and tap pins. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap." + (gm.ready ? "" : " This is the built-in map, so pins are approximate and lines are straight.");
+    document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ".";
     if (state.view === "route") renderRoute(items, sim);
     if (fs.open) { if (gm.ready) fsSheetRender(sim); else fsRender(); }
     persist();
@@ -1994,12 +1995,13 @@
 
   function renderRoute(items, sim) {
     var empty = document.getElementById("routeEmpty"), body = document.getElementById("routeBody");
-    empty.hidden = items.length > 0; body.hidden = items.length === 0;
-    if (!items.length) return;
+    empty.hidden = items.length > 0; body.hidden = false;
+    document.getElementById("routeOnly").hidden = !items.length;
     var cfg = cfgObj();
 
     updateKeyBanner();
     if (gm.ready) gmRender(sim, items); else drawMap(sim, items);
+    if (!items.length) return;
 
     // compare
     var cmp = document.getElementById("cmp"); cmp.innerHTML = "";
