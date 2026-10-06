@@ -910,6 +910,12 @@
       Array.prototype.forEach.call(wrap.children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-cat") === state.mapFilter ? "true" : "false"); });
     });
   }
+  // After picking a category, jump back to the start of the list if the page is scrolled down.
+  function scrollListTop() {
+    var y = window.scrollY || window.pageYOffset || 0, bar = document.querySelector(".bar");
+    var top = Math.max(0, main.getBoundingClientRect().top + y - (bar ? bar.offsetHeight : 0) - 8);
+    if (y > top + 2) { try { window.scrollTo({ top: top, behavior: "smooth" }); } catch (e) { window.scrollTo(0, top); } }
+  }
   function buildChips() {
     var opts = [{ id: "all", label: "All" }].concat(CATS);
     opts.forEach(function (c) {
@@ -919,6 +925,7 @@
         state.filter = c.id;
         Array.prototype.forEach.call(chipsEl.children, function (x, i) { x.setAttribute("aria-pressed", opts[i].id === state.filter ? "true" : "false"); });
         Array.prototype.forEach.call(main.querySelectorAll("section"), function (s) { s.hidden = !(state.filter === "all" || s.getAttribute("data-cat") === state.filter); });
+        requestAnimationFrame(scrollListTop);
       });
       chipsEl.appendChild(b);
     });
@@ -1378,7 +1385,9 @@
 
   /* ---------- reported-incident heat (SFPD incident reports via DataSF) ---------- */
   var heat = { loading: false, error: "", rows: null, asOf: null, pts: [], grid: {}, cap: 3, thr: { mid: 0, high: 0 }, streets: [], count: 0, key: "off" };
-  var HEAT_BASE = "https://data.sfgov.org/resource/wg3w-h783.json";
+  // The city runs the same open-data service on two addresses (data.sf.gov is the newer one). Try one, then the other.
+  var HEAT_BASES = ["https://data.sf.gov/resource/wg3w-h783.json", "https://data.sfgov.org/resource/wg3w-h783.json"];
+  var heatBase = 0;
   var HEAT_WIN = [{ id: "all", label: "All hours" }, { id: "day", label: "Daytime (6am-6pm)" }, { id: "night", label: "Evening and night" }];
   function toXY(lat, lng) { return { x: (lng + 122.45) * 88100, y: (lat - 37.77) * 110540 }; }
   function inWin(h) { var w = state.heatWin; return w === "all" || (w === "day" ? (h >= 6 && h < 18) : (h < 6 || h >= 18)); }
@@ -1438,10 +1447,28 @@
   function loadHeat() {
     if (heat.loading || heat.rows) return;
     heat.loading = true; heat.error = ""; renderHeatUi();
-    function getJson(u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }); }
+    function getJson(q) {
+      function attempt(bi, retry) {
+        var url = HEAT_BASES[bi] + q;
+        return fetch(url).then(function (r) {
+          if (r.status === 429 && retry < 2) {
+            console.warn("[reports] rate limited by " + HEAT_BASES[bi] + ", retrying");
+            return new Promise(function (res) { setTimeout(res, 900 * (retry + 1)); }).then(function () { return attempt(bi, retry + 1); });
+          }
+          if (!r.ok) throw new Error("HTTP " + r.status + " from " + HEAT_BASES[bi]);
+          heatBase = bi;
+          return r.json();
+        }).catch(function (e) {
+          console.warn("[reports] " + HEAT_BASES[bi] + " failed: " + ((e && e.message) || e));
+          if (bi + 1 < HEAT_BASES.length) return attempt(bi + 1, 0);
+          throw e;
+        });
+      }
+      return attempt(heatBase, 0);
+    }
     Promise.all([
-      getJson(HEAT_BASE + "?$select=" + encodeURIComponent("max(incident_datetime) as latest")),
-      getJson(HEAT_BASE + "?$select=incident_category&$group=incident_category&$limit=100")
+      getJson("?$select=" + encodeURIComponent("max(incident_datetime) as latest")),
+      getJson("?$select=incident_category&$group=incident_category&$limit=100")
     ]).then(function (res) {
       var latest = res[0] && res[0][0] && res[0][0].latest ? new Date(String(res[0][0].latest).replace(" ", "T")) : new Date();
       var cats = (res[1] || []).map(function (r) { return r.incident_category; }).filter(function (c) { return /^(larceny|robbery|assault)/i.test(c || ""); });
@@ -1450,7 +1477,7 @@
       var since = new Date(latest.getTime() - 30 * 864e5), pad = function (n) { return (n < 10 ? "0" : "") + n; };
       var iso = since.getFullYear() + "-" + pad(since.getMonth() + 1) + "-" + pad(since.getDate()) + "T00:00:00";
       var where = "incident_category in(" + cats.map(function (c) { return "'" + c.replace(/'/g, "''") + "'"; }).join(",") + ") AND incident_datetime > '" + iso + "' AND latitude IS NOT NULL";
-      return getJson(HEAT_BASE + "?$select=" + encodeURIComponent("latitude,longitude,incident_datetime,intersection") + "&$where=" + encodeURIComponent(where) + "&$limit=50000");
+      return getJson("?$select=" + encodeURIComponent("latitude,longitude,incident_datetime,intersection") + "&$where=" + encodeURIComponent(where) + "&$limit=50000");
     }).then(function (rows) {
       heat.rows = (rows || []).map(function (r) {
         return { lat: parseFloat(r.latitude), lng: parseFloat(r.longitude), h: parseInt(String(r.incident_datetime || "").slice(11, 13), 10), st: r.intersection || "" };
@@ -1459,8 +1486,9 @@
       if (!heat.rows.length) { heat.error = "The police data came back empty. Try again later."; heat.rows = null; }
       else buildHeat();
       renderHeatUi(); refresh();
-    }).catch(function () {
-      heat.loading = false; heat.error = "Couldn't load the police data. Check your connection and try again.";
+    }).catch(function (e) {
+      console.warn("[reports] gave up: " + ((e && e.message) || e));
+      heat.loading = false; heat.error = "Couldn't load the police data. Slide the switch off and on to retry.";
       renderHeatUi(); refresh();
     });
   }
