@@ -332,6 +332,11 @@
   /* Keep the first visible section clear of the sticky bar */
   main section { scroll-margin-top: calc(var(--barh, 190px) + env(safe-area-inset-top, 0px) + 6px); }
   html, body { overflow-anchor: none; }
+
+  /* Route to a last stop */
+  .alongbox { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px 14px 14px; margin: 12px 0; }
+  .alongbtns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .stoprow h4 .tag { margin-left: 8px; vertical-align: middle; }
   .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
   .cheat h2 { font-family: var(--display); font-size: 1.3rem; margin: 0 0 8px; }
   .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
@@ -367,6 +372,15 @@
   <div class="rv" id="routeView" hidden>
     <h2>Map and route</h2>
     <p class="hint" id="hoursHint">Tap Expand map to pan, zoom and tap pins. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap.</p>
+    <div class="alongbox" id="alongBox">
+      <div class="field"><label for="destSel">Last stop</label><select id="destSel"></select></div>
+      <div id="alongCtl" hidden>
+        <div class="field"><span class="lbl" id="alongLbl">Stops along the way</span><div class="seg" id="alongCount" role="group" aria-labelledby="alongLbl"></div></div>
+        <div class="field"><span class="lbl" id="alongCatLbl">Include</span><div class="chips" id="alongCats" role="group" aria-labelledby="alongCatLbl"></div></div>
+        <div class="alongbtns"><button class="btn" id="alongGo" type="button">Fill my route</button><button class="btn ghost" id="alongShuffle" type="button">Try different stops</button></div>
+        <p class="hint" id="alongNote" role="status" style="margin: 10px 0 0;"></p>
+      </div>
+    </div>
 
     <div class="empty" id="routeEmpty">
       <p>Add at least one stop to see it on the map.</p>
@@ -654,6 +668,9 @@
     view: "stops",
     filter: "all",
     mapFilter: "all",
+    dest: null,
+    auto: [],
+    fill: { count: 3, cats: {} },
     notes: false,
     heat: false,
     heatWin: "all",
@@ -842,11 +859,13 @@
       } else { c[i] = 0; i++; }
     }
   }
-  function bestOrder(items, cfg, obj) {
+  function bestOrder(items, cfg, obj, tail) {
     if (items.length <= 1) return items.slice();
+    var TL = tail || [];
+    function sm(o) { return simulate(TL.length ? o.concat(TL) : o, cfg); }
     var best = null, bs = Infinity, s;
     if (items.length <= 7) {
-      permute(items, function (a) { s = score(simulate(a, cfg), obj); if (s < bs) { bs = s; best = a.slice(); } });
+      permute(items, function (a) { s = score(sm(a), obj); if (s < bs) { bs = s; best = a.slice(); } });
       return best;
     }
     var rest = items.slice(), cur = [], pos = cfg.start;
@@ -855,7 +874,7 @@
       rest.forEach(function (x, i) { var d = hav(pos, x); if (d < bd) { bd = d; bi = i; } });
       var x = rest.splice(bi, 1)[0]; cur.push(x); pos = x;
     }
-    best = cur; bs = score(simulate(cur, cfg), obj);
+    best = cur; bs = score(sm(cur), obj);
     var improved = true, guard = 0;
     while (improved && guard < 30) {
       improved = false; guard++;
@@ -863,7 +882,7 @@
         for (var j = 0; j < best.length; j++) {
           if (i === j) continue;
           var t = best.slice(); var m = t.splice(i, 1)[0]; t.splice(j, 0, m);
-          s = score(simulate(t, cfg), obj);
+          s = score(sm(t), obj);
           if (s < bs - 1e-9) { bs = s; best = t; improved = true; }
         }
       }
@@ -951,7 +970,7 @@
     ITEMS.forEach(function (it) {
       var c = cardBtns[it.id], on = state.route.indexOf(it.id) >= 0;
       c.btn.setAttribute("aria-pressed", on ? "true" : "false");
-      c.btn.textContent = on ? "In my day" : "Add to my day";
+      c.btn.textContent = on ? (it.id === state.dest ? "Last stop" : "In my day") : "Add to my day";
       c.li.className = "card" + (on ? " on" : "");
       c.st.textContent = statusText(it, state.cfg.day);
       c.st.className = "status" + (isClosed(it) ? " closed" : "");
@@ -960,9 +979,12 @@
 
   /* ---------- state changes ---------- */
   function toggle(id) {
-    var i = state.route.indexOf(id);
+    var i = state.route.indexOf(id), firstPick = i < 0 && !state.route.length && !state.dest;
     if (i >= 0) state.route.splice(i, 1); else state.route.push(id);
     refresh();
+    if (firstPick) {
+      showUndo("Heading to " + byId[id].name + "? I can fill the way there.", function () { setDest(id); setView("route"); }, "Build route", 9000);
+    }
   }
   function setView(v) {
     state.view = v;
@@ -977,6 +999,11 @@
   }
 
   function refresh() {
+    if (state.dest) {
+      var di = state.route.indexOf(state.dest);
+      if (di < 0) state.dest = null; else if (di !== state.route.length - 1) { state.route.splice(di, 1); state.route.push(state.dest); }
+    }
+    state.auto = state.auto.filter(function (id) { return state.route.indexOf(id) >= 0 && id !== state.dest; });
     syncCards();
     var items = state.route.map(function (id) { return byId[id]; });
     var sim = simulate(items, cfgObj());
@@ -997,6 +1024,7 @@
     if (fs.open) { if (gm.ready) fsSheetRender(sim); else fsRender(); }
     persist();
     renderHeatUi();
+    renderAlongUi();
   }
 
 
@@ -1015,7 +1043,7 @@
   }
   function persist() {
     if (SAFE) return;
-    try { localStorage.setItem("sfdg:v1", JSON.stringify({ route: state.route, cfg: { start: state.cfg.start, chosen: !!state.cfg.startChosen, mode: state.cfg.mode, walkLimit: state.cfg.walkLimit, loop: state.cfg.loop } })); } catch (e) {}
+    try { localStorage.setItem("sfdg:v1", JSON.stringify({ dest: state.dest, auto: state.auto, route: state.route, cfg: { start: state.cfg.start, chosen: !!state.cfg.startChosen, mode: state.cfg.mode, walkLimit: state.cfg.walkLimit, loop: state.cfg.loop } })); } catch (e) {}
   }
   function restore() {
     if (SAFE) return false;
@@ -1029,6 +1057,7 @@
     var saved = null; try { saved = JSON.parse(localStorage.getItem("sfdg:v1") || "null"); } catch (e) {}
     if (saved && saved.route) {
       state.route = saved.route.filter(function (id) { return byId[id]; });
+      if (saved.dest && state.route.indexOf(saved.dest) >= 0) { state.dest = saved.dest; state.auto = (saved.auto || []).filter(function (id) { return state.route.indexOf(id) >= 0; }); }
       var c = saved.cfg || {};
       if (c.chosen && c.start && STARTS.some(function (x) { return x.id === c.start; })) { state.cfg.start = c.start; state.cfg.startChosen = true; }
       if (c.mode === "walk" || c.mode === "auto") state.cfg.mode = c.mode;
@@ -1298,11 +1327,12 @@
   var HOLD_MS = 420, undoT, undoFn = null;
   var pd = { active: false, id: null, sx: 0, sy: 0, moved: false, ghost: null, gx: 0, gy: 0 };
   function hideUndo() { document.getElementById("undo").classList.remove("show"); undoFn = null; }
-  function showUndo(msg, fn) {
+  function showUndo(msg, fn, label, ms) {
     var u = document.getElementById("undo"); undoFn = fn;
     document.getElementById("undoText").textContent = msg;
+    document.getElementById("undoBtn").textContent = label || "Undo";
     requestAnimationFrame(function () { u.classList.add("show"); });
-    clearTimeout(undoT); undoT = setTimeout(hideUndo, 6000);
+    clearTimeout(undoT); undoT = setTimeout(hideUndo, ms || 6000);
   }
   function showHint(text) { var h = document.getElementById("dragHint"); h.textContent = text; requestAnimationFrame(function () { h.classList.add("show"); }); }
   function hideHint() { document.getElementById("dragHint").classList.remove("show"); }
@@ -1574,6 +1604,106 @@
     if (c) { if (c.scrollIntoView) c.scrollIntoView({ behavior: "smooth", block: "center" }); c.classList.add("flash"); setTimeout(function () { c.classList.remove("flash"); }, 1600); }
   }
 
+  /* ---------- pick a last stop, then fill the way there ---------- */
+  function segProj(S, D, P) {
+    var a = toXY(S.lat, S.lng), b = toXY(D.lat, D.lng), p = toXY(P.lat, P.lng);
+    var dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+    var t = l2 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2 : 0, tc = Math.max(0, Math.min(1, t));
+    return { t: t, d: Math.hypot(p.x - (a.x + dx * tc), p.y - (a.y + dy * tc)) / 1609.34 };
+  }
+  function generateAlong(shuffle) {
+    var D = byId[state.dest]; if (!D) return { added: 0, note: "Pick a last stop first." };
+    var cfg = cfgObj(), S = cfg.start;
+    // keep the user's own picks, drop earlier suggestions
+    var keepIds = state.route.filter(function (id) { return id !== D.id && state.auto.indexOf(id) < 0; });
+    var base = keepIds.map(function (id) { return byId[id]; });
+    var direct = hav(S, D) * STREET, detour = Math.max(0.35, 0.3 * direct);
+    var useCats = Object.keys(state.fill.cats).filter(function (k) { return state.fill.cats[k]; });
+    var cands = [];
+    ITEMS.forEach(function (it) {
+      if (it.id === D.id || keepIds.indexOf(it.id) >= 0 || isClosed(it)) return;
+      if (useCats.length ? useCats.indexOf(it.cat) < 0 : it.dwell > 90) return;
+      if (hav(S, it) < 0.05 && hav(S, D) > 0.2) return;
+      var pr = segProj(S, D, it);
+      if (pr.t < -0.05 || pr.t > 1.05 || pr.d > detour) return;
+      cands.push({ it: it, t: pr.t, d: pr.d });
+    });
+    function ordered(extras) {
+      var all = base.map(function (b) { var q = segProj(S, D, b); return { it: b, t: q.t }; }).concat(extras);
+      all.sort(function (a, b) { return a.t - b.t; });
+      return all.map(function (x) { return x.it; }).concat([D]);
+    }
+    var baseViol = simulate(ordered([]), cfg).viol, chosen = [], want = state.fill.count;
+    for (var k = 0; k < want; k++) {
+      var best = null, bs = Infinity;
+      cands.forEach(function (c) {
+        if (chosen.indexOf(c) >= 0) return;
+        var sim = simulate(ordered(chosen.concat([c])), cfg);
+        if (sim.viol > baseViol) return;
+        var pen = chosen.some(function (x) { return x.it.cat === c.it.cat; }) ? 25 : 0;
+        var sc = sim.totalMin + pen + c.d * 40 + (shuffle ? Math.random() * 35 : 0);
+        if (sc < bs) { bs = sc; best = c; }
+      });
+      if (!best) break;
+      chosen.push(best);
+    }
+    var items = base.concat(chosen.map(function (c) { return c.it; }));
+    var est = {}; Object.keys(cfg).forEach(function (kk) { est[kk] = cfg[kk]; }); est.estOnly = true;
+    var order = bestOrder(items, est, "time", [D]).concat([D]);
+    state.route = order.map(function (x) { return x.id; });
+    state.auto = chosen.map(function (c) { return c.it.id; });
+    var note = chosen.length ? "Added " + chosen.length + (chosen.length === 1 ? " stop" : " stops") + " on the way to " + D.name + "." : "Nothing open fits along the way at this time. Try another start time, day or category.";
+    if (chosen.length && chosen.length < want) note += " Only " + chosen.length + " open " + (chosen.length === 1 ? "place fits" : "places fit") + " along the way.";
+    if (isClosed(D)) note += " " + D.name + " is closed that day, so pick another day or another last stop.";
+    return { added: chosen.length, note: note };
+  }
+  function setDest(id, thenFill) {
+    state.dest = id || null;
+    if (!id) { state.auto = []; refresh(); renderAlongUi("Last stop cleared. Your stops stay where they are."); return; }
+    if (state.route.indexOf(id) < 0) state.route.push(id);
+    var res = thenFill === false ? { note: "" } : generateAlong(false);
+    refresh(); renderAlongUi(res.note);
+  }
+  function renderAlongUi(note) {
+    var sel = document.getElementById("destSel"); if (!sel) return;
+    sel.value = state.dest || "";
+    document.getElementById("alongCtl").hidden = !state.dest;
+    Array.prototype.forEach.call(document.getElementById("alongCount").children, function (b) { b.setAttribute("aria-pressed", parseInt(b.getAttribute("data-n"), 10) === state.fill.count ? "true" : "false"); });
+    var none = !Object.keys(state.fill.cats).some(function (k) { return state.fill.cats[k]; });
+    Array.prototype.forEach.call(document.getElementById("alongCats").children, function (b) {
+      var c = b.getAttribute("data-cat"); b.setAttribute("aria-pressed", c === "all" ? (none ? "true" : "false") : (state.fill.cats[c] ? "true" : "false"));
+    });
+    if (typeof note === "string") document.getElementById("alongNote").textContent = note;
+  }
+  function setupAlong() {
+    var sel = document.getElementById("destSel");
+    var none = el("option", "", "None. Pick a place to end at"); none.value = ""; sel.appendChild(none);
+    CATS.forEach(function (c) {
+      var g = el("optgroup"); g.label = c.label;
+      ITEMS.filter(function (i) { return i.cat === c.id; }).sort(function (a, b) { return a.name < b.name ? -1 : 1; }).forEach(function (i) { var o = el("option", "", i.name); o.value = i.id; g.appendChild(o); });
+      sel.appendChild(g);
+    });
+    sel.addEventListener("change", function () { setDest(sel.value); });
+    var cnt = document.getElementById("alongCount");
+    [1, 2, 3, 4, 5].forEach(function (n) {
+      var b = el("button", "", String(n)); b.type = "button"; b.setAttribute("data-n", String(n));
+      b.addEventListener("click", function () { state.fill.count = n; renderAlongUi(); });
+      cnt.appendChild(b);
+    });
+    var cc = document.getElementById("alongCats");
+    [{ id: "all", label: "Anything" }].concat(CATS).forEach(function (c) {
+      var b = el("button", "chip", c.label); b.type = "button"; b.setAttribute("data-cat", c.id);
+      b.addEventListener("click", function () {
+        if (c.id === "all") state.fill.cats = {}; else state.fill.cats[c.id] = !state.fill.cats[c.id];
+        renderAlongUi();
+      });
+      cc.appendChild(b);
+    });
+    document.getElementById("alongGo").addEventListener("click", function () { var r = generateAlong(false); refresh(); renderAlongUi(r.note); });
+    document.getElementById("alongShuffle").addEventListener("click", function () { var r = generateAlong(true); refresh(); renderAlongUi(r.note); });
+    renderAlongUi("");
+  }
+
   /* ---------- map ---------- */
   var COAST = [[-122.4770,37.8106],[-122.4660,37.8085],[-122.4470,37.8085],[-122.4310,37.8065],[-122.4230,37.8075],[-122.4170,37.8100],[-122.4110,37.8112],[-122.4055,37.8090],[-122.4000,37.8060],[-122.3950,37.7990],[-122.3925,37.7955],[-122.3880,37.7890],[-122.3890,37.7800],[-122.3850,37.7700],[-122.3820,37.7580],[-122.3790,37.7480],[-122.3740,37.7380],[-122.3670,37.7330],[-122.3720,37.7230],[-122.3800,37.7140],[-122.3850,37.7080],[-122.5055,37.7080],[-122.5090,37.7300],[-122.5120,37.7600],[-122.5130,37.7750],[-122.5140,37.7800],[-122.5110,37.7830],[-122.5060,37.7860],[-122.4960,37.7870],[-122.4880,37.7900],[-122.4830,37.7930],[-122.4800,37.7990],[-122.4780,37.8070]];
   var PRESIDIO = [[-122.477,37.806],[-122.447,37.805],[-122.446,37.797],[-122.455,37.789],[-122.487,37.790],[-122.484,37.797]];
@@ -1840,12 +1970,14 @@
   function sameOrder(a, b) { return a.length === b.length && a.every(function (x, i) { return x.id === b[i].id; }); }
 
   function computeOptions(items, cfg) {
-    var key = JSON.stringify([state.route, state.cfg, legVer, myLoc ? myLoc.lat : 0]);
+    var key = JSON.stringify([state.route, state.cfg, legVer, myLoc ? myLoc.lat : 0, state.dest]);
     if (cmpCache.key === key) return cmpCache.opts;
     var cur = items.slice();
     var est = {}; Object.keys(cfg).forEach(function (k) { est[k] = cfg[k]; }); est.estOnly = true;
-    var fast = bestOrder(items, est, "time");
-    var cheap = bestOrder(items, est, "cost");
+    var dst = state.dest ? byId[state.dest] : null;
+    var rest = dst ? items.filter(function (x) { return x !== dst; }) : items;
+    var fast = bestOrder(rest, est, "time", dst ? [dst] : null), cheap = bestOrder(rest, est, "cost", dst ? [dst] : null);
+    if (dst) { fast = fast.concat([dst]); cheap = cheap.concat([dst]); }
     var list = [{ labels: ["Your order"], order: cur }];
     function add(label, ord) {
       for (var i = 0; i < list.length; i++) if (sameOrder(list[i].order, ord)) { list[i].labels.push(label); return; }
@@ -1916,7 +2048,7 @@
       var bad = r.issues.some(function (x) { return x.hard; });
       row.appendChild(el("div", "badge" + (bad ? " bad" : ""), String(i + 1)));
       var body = el("div");
-      body.appendChild(el("h4", "", r.it.name));
+      var h4 = el("h4", "", r.it.name); if (r.it.id === state.dest) h4.appendChild(el("span", "tag", "Last stop")); body.appendChild(h4);
       var when = "Arrive " + fmtTime(r.arrive) + (r.waited ? ", wait " + fmtDur(r.waited) + " until it opens" : "");
       body.appendChild(el("p", "muted", when));
       body.appendChild(el("p", "muted", statusText(r.it, state.cfg.day)));
@@ -2060,7 +2192,7 @@
       if (e.pointerType === "mouse" && e.button !== 0) return;
       var row = e.target.closest ? e.target.closest(".stoprow") : null;
       if (!row || (e.target.closest && e.target.closest("button, a, input, select"))) return;
-      if (state.route.length < 2) return;
+      if (state.route.length < 2 || (state.dest && row.id === "row-" + state.dest)) return;
       dr.pid = e.pointerId; dr.row = row; dr.li = row.parentNode;
       dr.sx = e.clientX; dr.sy = e.clientY; dr.curY = e.clientY;
       row.classList.add("pressing");
@@ -2168,7 +2300,7 @@
   var fromLink = restore();
   renderNotes();
   fsEl.hidden = true; document.body.style.overflow = "";
-  buildChips(); buildMapChips(); buildStops(); setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd();
+  buildChips(); buildMapChips(); buildStops(); setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd(); setupAlong();
   buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
   updateKeyBanner();
   var k0 = currentKey(); if (k0 && !SAFE) loadGoogle(k0);
@@ -2176,7 +2308,7 @@
   if (fromLink && state.route.length) setView("route");
   if (SAFE) { showToast("Safe mode: Google map, location and saved plans are off"); } else locateMe();
 
-  window.__sfTest = { locState: function () { return locState; }, myLoc: function () { return myLoc; }, NOTES: NOTES, heatLevelAt: heatLevelAt, legHeatLevel: legHeatLevel, heat: heat, gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
+  window.__sfTest = { generateAlong: generateAlong, setDest: setDest, locState: function () { return locState; }, myLoc: function () { return myLoc; }, NOTES: NOTES, heatLevelAt: heatLevelAt, legHeatLevel: legHeatLevel, heat: heat, gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
 })();
 </script>
 </body>
