@@ -19,6 +19,7 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="SF day guide: records, beer, house music">
 <meta property="og:description" content="Pick stops, compare route orders and see real opening hours across San Francisco.">
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#E8ECF1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1117" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -111,7 +112,9 @@
   .status.closed { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
   .add { font: inherit; font-size: 0.92rem; font-weight: 600; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
   .add[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .row .status { justify-self: start; }
+  .card .add { width: 100%; min-height: 44px; }
 
   /* Route view */
   .rv { padding-top: 18px; }
@@ -198,6 +201,7 @@
   #fsMap { position: absolute; inset: 0; touch-action: none; -webkit-user-select: none; user-select: none; cursor: grab; }
   #fsMap svg { display: block; width: 100%; height: 100%; border: 0; border-radius: 0; background: var(--water); }
   .mapfs-ctl { position: absolute; right: 12px; top: 12px; display: grid; gap: 8px; z-index: 2; }
+  .mapfs-ctl button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
   .mapfs-ctl button { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 700 1.05rem var(--body); cursor: pointer; }
   .mapfs-legend { position: absolute; left: 12px; top: 12px; z-index: 2; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; display: grid; gap: 4px; font-size: 0.8rem; color: var(--muted); }
   .mapfs-legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -250,6 +254,80 @@
   .pdghost { position: fixed; z-index: 95; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); border: 3px solid #fff; display: grid; place-items: center; font: 800 16px var(--display); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38); pointer-events: none; transform: scale(1.12); }
   .pd-src { opacity: 0.3; }
 
+
+  /* No text selection or callouts while holding map pins */
+  #mapBox, #mapBox *, #fsMap, #fsMap *, #fsGoogle, #gmap, .gmk { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body.pd-hold, body.pd-hold *, body.pd-drag, body.pd-drag * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+
+
+  /* Map category chips */
+  #mapChips { margin-bottom: 10px; }
+  .mapfs-chips { padding: 8px 16px; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+
+
+  /* Reported-incident heat */
+  .heatbox { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .heatrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .heatrow .heatst { font-size: 0.88rem; color: var(--muted); }
+  .hbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .heatbar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgba(228, 87, 46, 0.1), rgba(228, 87, 46, 0.9)); margin: 12px 0 4px; }
+  .heatlabels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); }
+  .heatnote { font-size: 0.84rem; color: var(--muted); margin: 10px 0 0; }
+  .heatstreets { margin: 12px 0 0; }
+  .heatstreets h4 { font-family: var(--display); font-size: 0.98rem; margin: 0 0 6px; }
+  .heatstreets ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 2px; font-size: 0.92rem; }
+  .heatstreets li span { color: var(--muted); }
+  .hl { display: inline-flex; align-items: center; gap: 6px; }
+  .hdot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: var(--muted); flex: 0 0 auto; }
+  .hdot.low { background: #3FA066; } .hdot.mid { background: #E0A100; } .hdot.high { background: #E4572E; }
+  .legrow .hl { margin-left: 10px; }
+  .stoprow p.hline { color: var(--muted); }
+
+
+  /* Local notes */
+  .maptools { flex-wrap: wrap; }
+  .notebox { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .notebox h3 { margin: 0 0 4px; font-size: 1.1rem; }
+  .notebox .intro { margin: 0 0 10px; font-size: 0.86rem; color: var(--muted); }
+  .ncard { border-top: 1px solid var(--line); padding: 12px 0 4px; }
+  .ncard.flash { box-shadow: 0 0 0 2px var(--accent); border-radius: 10px; padding-left: 8px; padding-right: 8px; }
+  .ncard h4 { font-family: var(--display); font-size: 1rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .ncard p { margin: 0 0 8px; font-size: 0.92rem; }
+  .nsrc { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.84rem; margin: 0 0 8px; }
+  .nsrc a { color: var(--accent); }
+  .nsrc span { color: var(--muted); }
+  .ndot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: 0 0 auto; background: var(--muted); }
+  .ndot.watch { background: #E0A100; } .ndot.calm { background: #3FA066; } .ndot.info { background: #5A6472; }
+  .gmk.note { width: 26px; height: 26px; border-radius: 50%; color: #fff; border: 2.5px solid #fff; display: grid; place-items: center; font: 800 13px var(--display); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); background: #5A6472; }
+  .gmk.note.watch { background: #E0A100; color: #11151C; } .gmk.note.calm { background: #3FA066; }
+  .sheet .nsrc a { color: var(--accent); }
+
+
+  /* Clear button */
+  .clearbtn { font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--warn); background: transparent; border: 1.5px solid var(--warn); border-radius: 999px; padding: 6px 14px; min-height: 36px; cursor: pointer; white-space: nowrap; }
+  .clearbtn:hover:not(:disabled) { background: var(--warn-bg); }
+  .clearbtn:disabled { color: var(--muted); border-color: var(--line); opacity: 0.55; cursor: default; }
+
+  .gmk.start.me { width: 18px; height: 18px; border-radius: 50%; background: #2B7FFF; border: 3px solid #fff; box-shadow: 0 0 0 7px rgba(43, 127, 255, 0.25); }
+
+  /* Error bar */
+  .errbar { position: fixed; left: 0; right: 0; top: 0; z-index: 120; background: #B8400A; color: #fff; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; font-size: 0.9rem; display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+  .errbar button { font: inherit; font-weight: 700; color: #fff; background: none; border: 1.5px solid #fff; border-radius: 8px; padding: 4px 12px; cursor: pointer; flex: 0 0 auto; }
+
+  /* Debug panel (add ?debug=1 to the address) */
+  .dbg { position: fixed; left: 0; right: 0; bottom: 0; max-height: 40vh; overflow: auto; z-index: 130; background: #0b0d12; color: #d7e0ee; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); white-space: pre-wrap; word-break: break-word; border-top: 2px solid #E4572E; }
+  .dbg b { color: #ffb38a; }
+
+  /* Small sliding switch */
+  .swt { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; -webkit-user-select: none; user-select: none; position: relative; min-height: 36px; }
+  .swt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .swtrack { position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--line); transition: background 0.2s ease; flex: 0 0 auto; }
+  .swtrack::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); transition: transform 0.2s ease; }
+  .swt input:checked + .swtrack { background: #E4572E; }
+  .swt input:checked + .swtrack::after { transform: translateX(16px); }
+  .swt input:focus-visible + .swtrack { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .swst { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+  .mapfs-top .swt { margin-left: auto; margin-right: 12px; }
   .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
   .cheat h2 { font-family: var(--display); font-size: 1.3rem; margin: 0 0 8px; }
   .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
@@ -272,7 +350,7 @@
   </header>
 
   <div class="bar">
-    <div class="sum"><span id="sumText"><strong>Nothing added yet</strong></span><button class="linkbtn" id="clear" type="button">Clear</button></div>
+    <div class="sum"><span id="sumText"><strong>Nothing added yet</strong></span><button class="clearbtn" id="clear" type="button" aria-label="Clear all stops">Clear all</button></div>
     <div class="tabs" role="group" aria-label="View">
       <button class="tab" id="tabStops" type="button" aria-pressed="true">Pick stops</button>
       <button class="tab" id="tabRoute" type="button" aria-pressed="false">Map and route</button>
@@ -302,7 +380,11 @@
         <button class="btn small" type="button" id="expandMap">Expand map</button>
         <button class="btn ghost small" type="button" id="zoomFit">Fit my route</button>
         <button class="btn ghost small" type="button" id="zoomCity">Whole city</button>
+        <button class="btn ghost small hbtn" type="button" id="notesBtn" aria-pressed="false">Local notes</button>
+        <label class="swt" title="SFPD theft, robbery and assault reports. Busy areas show more reports, so this reflects crowds as well as risk."><input type="checkbox" id="heatSwitch" role="switch" aria-label="Show crime reports on the map"><span class="swtrack" aria-hidden="true"></span><span class="swtxt">Reports</span><span class="swst" id="heatStatus" role="status"></span></label>
       </div>
+      <p class="hint" style="margin: 0 0 6px;">Places shown on the map</p>
+      <div class="chips" id="mapChips" role="group" aria-label="Show places on the map by category"></div>
       <div class="map-box" id="mapBox"></div>
       <div class="legend">
         <span><i class="sw"></i>Walk</span>
@@ -311,12 +393,19 @@
         <span><i class="sw dot"></i>Tap a gray dot to add it</span>
       </div>
 
+      <div class="notebox" id="notesBox" hidden>
+        <h3>Local notes</h3>
+        <p class="intro">Summaries of recent news, local data sites and forum threads, written in early Oct 2026. Not live, and forum posts are anecdotal. Conditions change block by block.</p>
+        <div id="notesList"></div>
+      </div>
+
       <details class="set" open>
         <summary>Route settings</summary>
         <div class="field"><span class="lbl" id="dayLbl2">Day</span><div class="chips" id="dayChips2" role="group" aria-labelledby="dayLbl2"></div></div>
         <div class="field">
           <label for="startSel">Start from</label>
           <select id="startSel"></select>
+          <p class="hint" id="locNote" style="margin: 4px 0 0;" role="status"></p>
         </div>
         <div class="field">
           <label for="startTime">Start time</label>
@@ -362,11 +451,13 @@
 </div>
 
 
+<div class="errbar" id="errBar" role="alert" hidden><span id="errMsg"></span><button type="button" id="errReload">Reload</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="draghint" id="dragHint" aria-hidden="true"></div>
 <div class="undo" id="undo" role="status" aria-live="polite"><span id="undoText"></span><button type="button" id="undoBtn">Undo</button></div>
 <div class="mapfs" id="mapFs" role="dialog" aria-modal="true" aria-label="Interactive route map" hidden>
-  <div class="mapfs-top"><strong>Route map</strong><button class="btn small" type="button" id="fsDone">Done</button></div>
+  <div class="mapfs-top"><strong>Route map</strong><label class="swt"><input type="checkbox" id="fsHeatSwitch" role="switch" aria-label="Show crime reports on the map"><span class="swtrack" aria-hidden="true"></span><span class="swtxt">Reports</span></label><button class="btn small" type="button" id="fsDone">Done</button></div>
+  <div class="chips mapfs-chips" id="fsChips" role="group" aria-label="Show places on the map by category"></div>
   <div class="mapfs-body">
     <div id="fsMap"></div>
     <div id="fsGoogle"></div>
@@ -378,6 +469,7 @@
     <div class="mapfs-ctl">
       <button type="button" id="fsIn" aria-label="Zoom in">+</button>
       <button type="button" id="fsOut" aria-label="Zoom out">-</button>
+      <button type="button" id="fsNotes" aria-label="Show local notes" aria-pressed="false">Notes</button>
       <button type="button" id="fsFit" aria-label="Fit my route">Fit</button>
       <button type="button" id="fsCity" aria-label="Show the whole city">City</button>
     </div>
@@ -388,6 +480,47 @@
 <script src="config.js"></script>
 <script>
 (function () {
+  function showErr(m) {
+    var b = document.getElementById("errBar"), t = document.getElementById("errMsg");
+    if (!b || !t) return;
+    t.textContent = "Something went wrong: " + m; b.hidden = false;
+  }
+  window.addEventListener("error", function (e) {
+    var m = (e && e.message) || "";
+    if (/ResizeObserver/.test(m)) return;
+    showErr(m || "an unknown error");
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason; showErr(String((r && r.message) || r || "an unknown error"));
+  });
+  document.addEventListener("DOMContentLoaded", function () {
+    var rb = document.getElementById("errReload"); if (rb) rb.addEventListener("click", function () { location.reload(); });
+  });
+
+  // Debug panel: open the page with ?debug=1 to see errors and warnings on screen (no developer tools needed).
+  if (/[?&]debug=1/.test(location.search)) {
+    var lines = [], panel = null;
+    function stamp() { var d = new Date(); return ("0" + d.getMinutes()).slice(-2) + ":" + ("0" + d.getSeconds()).slice(-2); }
+    function draw() {
+      if (!panel && document.body) { panel = document.createElement("div"); panel.className = "dbg"; panel.id = "dbgPanel"; document.body.appendChild(panel); }
+      if (panel) { panel.innerHTML = "<b>Debug log</b> (newest last)\n" + lines.slice(-40).join("\n").replace(/&/g, "&amp;").replace(/</g, "&lt;"); panel.scrollTop = panel.scrollHeight; }
+    }
+    function log(kind, args) {
+      try { lines.push(stamp() + " " + kind + ": " + Array.prototype.map.call(args, function (a) { return (a && a.message) ? a.message : (typeof a === "object" ? JSON.stringify(a) : String(a)); }).join(" ")); } catch (e) {}
+      if (lines.length > 200) lines.shift();
+      draw();
+    }
+    ["error", "warn"].forEach(function (k) { var o = console[k]; console[k] = function () { log(k, arguments); return o.apply(console, arguments); }; });
+    window.addEventListener("error", function (e) { log("window error", [(e && e.message) || "unknown", (e && e.filename ? e.filename.split("/").pop() : "") + ":" + (e && e.lineno || "")]); });
+    window.addEventListener("unhandledrejection", function (e) { log("promise", [e && e.reason]); });
+    document.addEventListener("DOMContentLoaded", function () { log("info", ["debug mode on. Browser: " + navigator.userAgent]); });
+    window.__dbgLog = function (m) { log("info", [m]); };
+  }
+})();
+</script>
+<script>
+(function () {
+  var SAFE = /[?&]safe=1/.test(location.search);
   var CONFIG = {
     googleMapsApiKey: (typeof window.SF_GUIDE_KEY === "string" ? window.SF_GUIDE_KEY : ""),   // set in config.js, or use the box on the Map and route tab
     credit: { text: "Designed and built by Joaquin", url: "https://joaquinboehmer.framer.website" }
@@ -403,6 +536,8 @@
     { id: "food", label: "Coffee and quick eats", note: "Rough costs for a coffee, a pastry or a quick meal." },
     { id: "music", label: "House music", note: "Cover varies, so it is not in the tally. One Halcyon reviewer paid $50." },
     { id: "art", label: "Art", note: "Museums, design and street murals. Check each status line for that day." },
+    { id: "tech", label: "Tech", note: "Walk-in spots with no RSVP needed. Most Tech Week events need approval, so they are left out. The Computer History Museum is in Mountain View (closed Mon and Tue) if you want a day trip." },
+    { id: "work", label: "Work spots", note: "Places to sit with a laptop. Wi-Fi and outlet details come from reviews, so confirm when you arrive, and keep buying something at cafes." },
     { id: "museums", label: "Museums and oddities", note: "Status lines show hours for the day you picked." },
     { id: "sights", label: "Sights", note: "" }
   ];
@@ -476,7 +611,26 @@
     { id: "saigon-sandwich", cat: "food", name: "Saigon Sandwich", where: "Larkin St, Tenderloin", blurb: "Classic banh mi to go. Close to Dark Entries.", entry: 7, entryLabel: "Banh mi about $6-7 per reviewers. Cash only", transitLabel: "6 min walk", lat: 37.78313, lng: -122.41736, dwell: 15, q: "Saigon Sandwich, 560 Larkin St, San Francisco, CA", hrs: [[7,17.5],[7,17.5],[7,18],[7,18],[7,18],[7,18],[7,18]], note: "Cash only" },
     { id: "lg-sandwich", cat: "food", name: "L & G Vietnamese Sandwich", where: "Eddy St, Tenderloin", blurb: "Cheap, loaded banh mi. Cards accepted with a fee.", entry: 7, entryLabel: "Banh mi about $6 per a reviewer", transitLabel: "6 min walk", lat: 37.78338, lng: -122.41783, dwell: 15, q: "L & G Vietnamese Sandwich, 602 Eddy St, San Francisco, CA", hrs: R([8,19]) },
     { id: "hayz-dog", cat: "food", name: "Hayz Dog", where: "Hayes St, Hayes Valley", blurb: "Quick hot dogs with vegan options. Near Grooves.", entry: 14, entryLabel: "A dog and a side, under $20 per a reviewer", transitLabel: "10 min walk", lat: 37.77709, lng: -122.42235, dwell: 25, q: "Hayz Dog, 364 Hayes St, San Francisco, CA", hrs: [[11,21],[11,21],[11,21],[11,23.5],[11,23.5],[11,23.5],[11,21]] },
-    { id: "double-decker", cat: "food", name: "Double Decker", where: "Grove St, Hayes Valley", blurb: "Burgers and fries, mostly takeout.", entry: 15, entryLabel: "Burger about $15 (estimate)", transitLabel: "10 min walk", lat: 37.77762, lng: -122.42388, dwell: 25, q: "Double Decker, 465 Grove St, San Francisco, CA", hrs: R([11,20.5]) }
+    { id: "double-decker", cat: "food", name: "Double Decker", where: "Grove St, Hayes Valley", blurb: "Burgers and fries, mostly takeout.", entry: 15, entryLabel: "Burger about $15 (estimate)", transitLabel: "10 min walk", lat: 37.77762, lng: -122.42388, dwell: 25, q: "Double Decker, 465 Grove St, San Francisco, CA", hrs: R([11,20.5]) },
+    { id: "noisebridge", cat: "tech", name: "Noisebridge", where: "Capp St, Mission", blurb: "A volunteer-run hackerspace with 3D printers, a laser cutter and music gear. Free to visit, donation based.", entry: 0, entryLabel: "Free, donations welcome", transitLabel: "Muni or BART, about $3 each way", lat: 37.76243, lng: -122.41854, dwell: 45, q: "Noisebridge, 272 Capp St, San Francisco, CA", hrs: [[14,21],[14,21],[14,21],[14,21],[14,21],[11,21],[12.5,21]] },
+    { id: "gray-area", cat: "tech", name: "Gray Area", where: "Mission St, Mission", blurb: "An art and technology center in the Grand Theater, with interactive installations and workshops. Evening shows are ticketed.", entry: null, entryLabel: "Daytime visit: check. Evening shows are ticketed", transitLabel: "Muni or BART, about $3 each way", lat: 37.75439, lng: -122.4185, dwell: 45, q: "Gray Area Grand Theater, 2665 Mission St, San Francisco, CA", hrs: [N,[12,18],[12,18],[12,18],[12,18],N,N] },
+    { id: "internet-archive", cat: "tech", name: "Internet Archive", where: "Funston Ave, Richmond", blurb: "The nonprofit behind the Wayback Machine. Reviewers mention free tours on Fridays at 1pm.", entry: 0, entryLabel: "Free. Friday tours per reviewers (confirm)", transitLabel: "Muni $2.75 each way, about 40 min", lat: 37.78232, lng: -122.47164, dwell: 60, q: "Internet Archive, 300 Funston Ave, San Francisco, CA", hrs: [[9,17],[9,17],[9,17],[9,17],[9,17],N,N] },
+    { id: "tesla-vanness", cat: "tech", name: "Tesla Showroom", where: "Van Ness Ave", blurb: "Browse the lineup and the Roadster up close. Walk in to look around.", entry: 0, entryLabel: "Free to browse", transitLabel: "10 min walk", lat: 37.78456, lng: -122.42146, dwell: 25, q: "Tesla San Francisco Van Ness, 999 Van Ness Ave, San Francisco, CA", hrs: R([10,18]) },
+    { id: "apple-union-square", cat: "tech", name: "Apple Union Square", where: "Post St, Union Square", blurb: "The flagship store, with a big public plaza and every device to try.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni $2.75 each way, or a 20 min walk", lat: 37.78869, lng: -122.40717, dwell: 30, q: "Apple Union Square, 300 Post St, San Francisco, CA", hrs: [[10,20],[10,20],[10,20],[10,20],[10,20],[10,20],[11,19]] },
+    { id: "power-electronics", cat: "tech", name: "Power Electronics", where: "Mission St, Mission", blurb: "A local electronics shop for cables, adapters, amps and keyboards. Handy for DJ and VJ gear.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni or BART, about $3 each way", lat: 37.75887, lng: -122.4194, dwell: 25, q: "Power Electronics, 2388 Mission St, San Francisco, CA", hrs: [[11,18],[11,18],[11,18],[11,18],[11,18],[11,18],N] },
+    { id: "letterman-ldac", cat: "tech", name: "Letterman Digital Arts Center", where: "Presidio", blurb: "The Lucasfilm and ILM campus. The Building B lobby has a free gallery of film props and costumes.", entry: 0, entryLabel: "Free (lobby gallery)", transitLabel: "Muni $2.75 each way", lat: 37.79981, lng: -122.44926, dwell: 30, q: "Letterman Digital Arts Center, 1 Letterman Dr, San Francisco, CA", hrs: null, noHours: "Lobby is open on business days. Hours not confirmed" },
+    { id: "agi-store", cat: "tech", name: "AGI, Inc. Store pop-up", where: "Mission (address on the event page)", blurb: "A pop-up store you shop with smart glasses. Coffee on the house, and you can drop in to cowork.", entry: 0, entryLabel: "Free. Drop in, no RSVP (per the host)", transitLabel: "Muni or BART, about $3 each way", lat: 37.7599, lng: -122.4148, dwell: 30, q: "Mission District, San Francisco, CA", hrs: [N,[9,16],[9,16],N,N,N,N], note: "Tue and Wed only. Pin is the neighborhood, not the address" },
+    { id: "sfpl-main", cat: "work", name: "San Francisco Main Library", where: "Larkin St, Civic Center", blurb: "Free, big and quiet, right next to the Asian Art Museum. Reviewers like the bright desks facing the plaza.", entry: 0, entryLabel: "Free. No card needed", transitLabel: "2 min walk", lat: 37.77908, lng: -122.4158, dwell: 90, q: "San Francisco Main Library, 100 Larkin St, San Francisco, CA", hrs: [[9,18],[9,20],[9,20],[9,20],[12,18],[10,18],[12,18]] },
+    { id: "anchor-cowork", cat: "work", name: "Anchor Coworking", where: "Market St, near Van Ness", blurb: "Open 24 hours, with fast internet and phone booths. A reviewer paid $25 for a day pass.", entry: 25, entryLabel: "Day pass about $25 per a reviewer (confirm)", transitLabel: "8 min walk", lat: 37.77503, lng: -122.41999, dwell: 120, q: "Anchor Coworking, 1540 Market St, San Francisco, CA", hrs: R(ALL) },
+    { id: "lans-cowork", cat: "work", name: "Coworking SF by LANS", where: "Polk St, Polk Gulch", blurb: "Desks with monitors and power, plus phone booths. You book through the LANS app, and reviewers say later-in-the-day bookings cost less.", entry: null, entryLabel: "Day pass: check the LANS app", transitLabel: "Muni $2.75, or a 15 min walk", lat: 37.7911, lng: -122.42107, dwell: 120, q: "Coworking SF by LANS, 1541 Polk St, San Francisco, CA", hrs: R([5,24]), note: "One reviewer says people can walk in, so keep your bag with you" },
+    { id: "trellis-cowork", cat: "work", name: "Trellis Coworking", where: "Mission St near 6th", blurb: "A bright coworking space with a cafe and bar. Reviewers praise the internet and the phone booths.", entry: null, entryLabel: "Day pass or cafe purchase: check", transitLabel: "12 min walk", lat: 37.78107, lng: -122.4083, dwell: 120, q: "Trellis Coworking & Events, 981 Mission St, San Francisco, CA", hrs: [[9,17],[9,17],N,[9,17],[9,17],N,N], note: "Near 6th St, so see Local notes" },
+    { id: "binge-coffee", cat: "work", name: "Binge Coffee House", where: "Valencia St, Mission", blurb: "A Viet-family cafe with lots of tables to work from and a free photobooth. Near Stranded Records.", entry: 7, entryLabel: "A drink about $6-7 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76436, lng: -122.42204, dwell: 90, q: "Binge Coffee House, 530 Valencia St, San Francisco, CA", hrs: [[9,18],[9,18],[9,18],[9,18],[9,20],[9,20],[9,19]] },
+    { id: "four-barrel", cat: "work", name: "Four Barrel Coffee", where: "Valencia St, Mission", blurb: "Spacious roastery with vinyl playing. A reviewer says no Wi-Fi or outlets, so it suits an hour or two of offline focus.", entry: 8, entryLabel: "A drink about $6-8 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.76702, lng: -122.42178, dwell: 60, q: "Four Barrel Coffee, 375 Valencia St, San Francisco, CA", hrs: R([7,17]) },
+    { id: "doppio", cat: "work", name: "Doppio Coffee and Brunch", where: "Mission St, SoMa", blurb: "A laid-back cafe with natural light. One reviewer sat there for nearly four hours.", entry: 8, entryLabel: "A drink and a toast about $8-12 (estimate)", transitLabel: "13 min walk", lat: 37.77332, lng: -122.41801, dwell: 90, q: "Doppio Coffee & Brunch, 1551 Mission St, San Francisco, CA", hrs: [[6.5,17],[6.5,17],[6.5,17],[6.5,20],[6.5,20],[8,20],[8,20]] },
+    { id: "sohn", cat: "work", name: "SOHN", where: "3rd St, Dogpatch", blurb: "A big, bright Korean cafe with free Wi-Fi and plenty of outlets, per reviewers. Seating on two floors.", entry: 8, entryLabel: "A drink about $6-8 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75732, lng: -122.38794, dwell: 90, q: "SOHN, 2535 3rd St, San Francisco, CA", hrs: [N,[9,16],[9,16],N,[9,16],[9,16],[9,16]] },
+    { id: "third-wheel", cat: "work", name: "Third Wheel Coffee", where: "Oak St, near the Panhandle", blurb: "A small coffee bar with outdoor benches that have outlets, per a reviewer. Lines at peak times.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.77323, lng: -122.43559, dwell: 45, q: "Third Wheel Coffee, 991 Oak St, San Francisco, CA", hrs: R([7,15]) },
+    { id: "birdcage", cat: "work", name: "The Birdcage", where: "Sutter St, Lower Nob Hill", blurb: "A cafe that shows local art and sells vinyl and shirts. Reviewers call it a good spot to read or work.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "Muni $2.75, or a 16 min walk", lat: 37.78868, lng: -122.41393, dwell: 60, q: "The Birdcage, 816 Sutter St, San Francisco, CA", hrs: [N,[9,17],[9,14],[9,17],[8.5,17],[8.5,14],[9,14]] },
+    { id: "adan-cafe", cat: "work", name: "Adan Cafe", where: "Mason St, near Union Square", blurb: "Open until 9pm, with Yemeni coffee and tea. A visitor found it a good place to work. On the edge of the Tenderloin, so best in daytime.", entry: 6, entryLabel: "A drink about $5-6 (estimate)", transitLabel: "13 min walk", lat: 37.78474, lng: -122.40919, dwell: 60, q: "Adan Cafe, 120 Mason St, San Francisco, CA", hrs: R([7,21]) }
   ];
 
   var byId = {};
@@ -487,9 +641,13 @@
     route: [],
     view: "stops",
     filter: "all",
+    mapFilter: "all",
+    notes: false,
+    heat: false,
+    heatWin: "all",
     zoom: "fit",
     dwell: {},
-    cfg: { start: "civic", startTime: "12:00", mode: "auto", walkLimit: 0.8, loop: false, day: 0 }
+    cfg: { start: "me", startChosen: false, startTime: "12:00", mode: "auto", walkLimit: 0.8, loop: false, day: 0 }
   };
   state.cfg.day = TODAY;
   (function () {
@@ -521,7 +679,45 @@
     var s = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.pow(Math.sin(dLng / 2), 2);
     return 2 * R * Math.asin(Math.sqrt(s));
   }
-  var myLoc = null;
+  var myLoc = null, locState = "idle", locWatch = null, lastLocT = 0, pendingMe = false;
+  function inSF(lat, lng) { return lat > 37.60 && lat < 37.90 && lng > -122.60 && lng < -122.30; }
+  function setMyLoc(lat, lng, acc) {
+    myLoc = { id: "me:" + lat.toFixed(3) + "," + lng.toFixed(3), label: "My location", lat: lat, lng: lng, acc: acc || 0, q: lat + "," + lng };
+  }
+  function renderLocNote() {
+    var n = document.getElementById("locNote"); if (!n) return;
+    var t = "";
+    if (locState === "asking") t = "Finding your location...";
+    else if (locState === "ok") t = state.cfg.start === "me" ? "Starting from your location" + (myLoc && myLoc.acc ? " (accurate to about " + Math.round(myLoc.acc) + " m)." : ".") : "Starting from the place you picked. Choose My current location to use where you are.";
+    else if (locState === "denied") t = "Location is off for this site, so the route starts from Civic Center. Allow location for this site in your browser settings, then reload.";
+    else if (locState === "outside") t = "You're outside San Francisco, so the route starts from Civic Center. Pick another start below if you like.";
+    else if (locState === "unsupported" || locState === "error") t = "Couldn't get your location, so the route starts from Civic Center.";
+    n.textContent = t;
+  }
+  function revertStartSelect() { var s0 = document.getElementById("startSel"); if (s0) s0.value = state.cfg.start === "me" ? "civic" : state.cfg.start; }
+  function onFix(p, initial) {
+    var lat = p.coords.latitude, lng = p.coords.longitude;
+    if (!inSF(lat, lng)) { locState = "outside"; if (pendingMe) { pendingMe = false; revertStartSelect(); } renderLocNote(); return; }
+    var first = !myLoc, moved = first || hav({ lat: lat, lng: lng }, myLoc) > 0.025;
+    setMyLoc(lat, lng, p.coords.accuracy); locState = "ok";
+    if ((initial && !state.cfg.startChosen) || pendingMe) { state.cfg.start = "me"; state.cfg.startChosen = false; pendingMe = false; }
+    if (moved || initial) { gm.fitKey = ""; renderLocNote(); syncSettingsUI(); refresh(); if (first && state.cfg.start === "me") showToast("Using your location"); }
+    else renderLocNote();
+  }
+  function locFail(err) {
+    locState = (err && err.code === 1) ? "denied" : "error";
+    if (pendingMe) { pendingMe = false; revertStartSelect(); showToast("Couldn't get your location. Check the permission."); }
+    renderLocNote();
+  }
+  function startWatch() {
+    if (locWatch != null || !navigator.geolocation) return;
+    locWatch = navigator.geolocation.watchPosition(function (p) { var now = Date.now(); if (now - lastLocT < 5000) return; lastLocT = now; onFix(p, false); }, function () {}, { enableHighAccuracy: true, maximumAge: 10000 });
+  }
+  function locateMe() {
+    if (!navigator.geolocation) { locState = "unsupported"; renderLocNote(); return; }
+    locState = "asking"; renderLocNote();
+    navigator.geolocation.getCurrentPosition(function (p) { onFix(p, true); startWatch(); }, locFail, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
+  }
   function startObj() {
     if (state.cfg.start === "me" && myLoc) return myLoc;
     for (var i = 0; i < STARTS.length; i++) if (STARTS[i].id === state.cfg.start) return STARTS[i];
@@ -697,6 +893,23 @@
       sec.appendChild(ul); main.appendChild(sec);
     });
   }
+  function buildMapChips() {
+    ["mapChips", "fsChips"].forEach(function (cid) {
+      var wrap = document.getElementById(cid); if (!wrap) return; wrap.innerHTML = "";
+      [{ id: "all", label: "All" }].concat(CATS).forEach(function (c) {
+        var b = el("button", "chip", c.label); b.type = "button"; b.setAttribute("data-cat", c.id);
+        b.setAttribute("aria-pressed", c.id === state.mapFilter ? "true" : "false");
+        b.addEventListener("click", function () { state.mapFilter = c.id; syncMapChips(); refresh(); });
+        wrap.appendChild(b);
+      });
+    });
+  }
+  function syncMapChips() {
+    ["mapChips", "fsChips"].forEach(function (cid) {
+      var wrap = document.getElementById(cid); if (!wrap) return;
+      Array.prototype.forEach.call(wrap.children, function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-cat") === state.mapFilter ? "true" : "false"); });
+    });
+  }
   function buildChips() {
     var opts = [{ id: "all", label: "All" }].concat(CATS);
     opts.forEach(function (c) {
@@ -752,12 +965,14 @@
       if (sim.tbd) t += " plus covers";
       s.innerHTML = t;
     }
+    document.getElementById("clear").disabled = !items.length;
     document.getElementById("tabRoute").textContent = items.length ? "Map and route (" + items.length + ")" : "Map and route";
     var dayName = DAYS_LONG[state.cfg.day] + (state.cfg.day === TODAY ? " (today)" : "");
     document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ". Tap Expand map to pan, zoom and tap pins. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap." + (gm.ready ? "" : " This is the built-in map, so pins are approximate and lines are straight.");
     if (state.view === "route") renderRoute(items, sim);
     if (fs.open) { if (gm.ready) fsSheetRender(sim); else fsRender(); }
     persist();
+    renderHeatUi();
   }
 
 
@@ -775,9 +990,11 @@
     return { route: o.r.split(",").filter(function (id) { return byId[id]; }), day: o.d !== undefined ? parseInt(o.d, 10) : -1, time: o.t || "" };
   }
   function persist() {
-    try { localStorage.setItem("sfdg:v1", JSON.stringify({ route: state.route, cfg: { start: state.cfg.start === "me" ? "civic" : state.cfg.start, mode: state.cfg.mode, walkLimit: state.cfg.walkLimit, loop: state.cfg.loop } })); } catch (e) {}
+    if (SAFE) return;
+    try { localStorage.setItem("sfdg:v1", JSON.stringify({ route: state.route, cfg: { start: state.cfg.start, chosen: !!state.cfg.startChosen, mode: state.cfg.mode, walkLimit: state.cfg.walkLimit, loop: state.cfg.loop } })); } catch (e) {}
   }
   function restore() {
+    if (SAFE) return false;
     var h = parseHash();
     if (h && h.route.length) {
       state.route = h.route;
@@ -789,7 +1006,7 @@
     if (saved && saved.route) {
       state.route = saved.route.filter(function (id) { return byId[id]; });
       var c = saved.cfg || {};
-      if (c.start && STARTS.some(function (x) { return x.id === c.start; })) state.cfg.start = c.start;
+      if (c.chosen && c.start && STARTS.some(function (x) { return x.id === c.start; })) { state.cfg.start = c.start; state.cfg.startChosen = true; }
       if (c.mode === "walk" || c.mode === "auto") state.cfg.mode = c.mode;
       if (typeof c.walkLimit === "number" && c.walkLimit >= 0.3 && c.walkLimit <= 2) state.cfg.walkLimit = c.walkLimit;
       state.cfg.loop = !!c.loop;
@@ -854,7 +1071,7 @@
   function teardownGoogle() {
     gm.ready = false; gm.loading = false;
     if (gm.host && gm.host.parentNode) gm.host.parentNode.removeChild(gm.host);
-    gm.host = null; gm.map = null; gm.overlays = []; gm.lines = []; gm.fitKey = "";
+    gm.host = null; gm.map = null; gm.overlays = []; gm.lines = []; gm.fitKey = ""; gm.heatKey = ""; gm.heatCircles = [];
     fsEl.classList.remove("google");
   }
   function makeMarkerClass() {
@@ -999,6 +1216,10 @@
   }
 
   function onMapTap(kind, id) {
+    if (kind === "note") {
+      if (fs.open) { fs.sheet = { type: "note", id: id }; refresh(); } else openNoteCard(id);
+      return;
+    }
     if (fs.open) {
       fs.sheet = kind === "start" ? { type: "start" } : { type: kind === "go" ? "stop" : "add", id: id };
       refresh(); return;
@@ -1037,12 +1258,14 @@
       if (holdId) bindHold(d, holdId, onclick); else d.addEventListener("click", onclick);
       var m = new gm.Marker(pos, d); m.setMap(map); gm.overlays.push(m);
     }
-    ITEMS.forEach(function (it) { if (state.route.indexOf(it.id) < 0) mk("dot", "", it, it.name, function () { onMapTap("add", it.id); }, null, it.id); });
-    mk("start", "S", st, "Start: " + st.label, function () { onMapTap("start"); });
+    ITEMS.forEach(function (it) { if (state.route.indexOf(it.id) < 0 && (state.mapFilter === "all" || it.cat === state.mapFilter)) mk("dot", "", it, it.name, function () { onMapTap("add", it.id); }, null, it.id); });
+    var isMe = String(st.id).indexOf("me:") === 0; mk("start" + (isMe ? " me" : ""), isMe ? "" : "S", st, isMe ? "Your location" : "Start: " + st.label, function () { onMapTap("start"); });
     sim.rows.forEach(function (r, i) {
       var bad = r.issues.some(function (x) { return x.hard; });
       mk("pin" + (bad ? " bad" : ""), String(i + 1), r.it, r.it.name, function () { onMapTap("go", r.it.id); }, r.it.id);
     });
+    if (state.notes) NOTES.forEach(function (n) { mk("note " + n.tone, TONE_GLYPH[n.tone], n, n.title, function () { onMapTap("note", n.id); }); });
+    gmHeatRender();
     var fk = state.route.join(",") + "|" + state.cfg.start;
     if (gm.fitKey !== fk) { gm.fitKey = fk; gmFit(false); }
   }
@@ -1059,6 +1282,9 @@
   }
   function showHint(text) { var h = document.getElementById("dragHint"); h.textContent = text; requestAnimationFrame(function () { h.classList.add("show"); }); }
   function hideHint() { document.getElementById("dragHint").classList.remove("show"); }
+  function holdOn() { document.body.classList.add("pd-hold"); }
+  function holdOff() { document.body.classList.remove("pd-hold"); }
+  function clearSelection() { try { var sel = window.getSelection && window.getSelection(); if (sel && sel.removeAllRanges) sel.removeAllRanges(); } catch (x) {} }
   function buzz(p) { if (navigator.vibrate) { try { navigator.vibrate(p); } catch (x) {} } }
   function changeRoute(next, msg) {
     var snap = state.route.slice();
@@ -1099,6 +1325,7 @@
   function pdBegin(id, x, y) {
     if (pd.active) return;
     pd.active = true; pd.id = id; pd.sx = x; pd.sy = y; pd.gx = x; pd.gy = y - 30; pd.moved = false;
+    holdOn(); document.body.classList.add("pd-drag"); clearSelection();
     var g = document.createElement("div"); g.className = "pdghost"; g.textContent = String(state.route.indexOf(id) + 1);
     g.style.left = pd.gx + "px"; g.style.top = pd.gy + "px"; document.body.appendChild(g); pd.ghost = g;
     Array.prototype.forEach.call(document.querySelectorAll('[data-go="' + id + '"]'), function (n) { n.classList.add("pd-src"); });
@@ -1117,7 +1344,7 @@
   function pdEnd(x, y, cancelled) {
     if (!pd.active) return;
     var t = (pd.moved && !cancelled) ? pdTarget() : null, id = pd.id, moved = pd.moved;
-    pd.active = false;
+    pd.active = false; holdOff(); document.body.classList.remove("pd-drag"); clearSelection();
     if (pd.ghost && pd.ghost.parentNode) pd.ghost.parentNode.removeChild(pd.ghost);
     pd.ghost = null; hideHint();
     Array.prototype.forEach.call(document.querySelectorAll(".pd-src"), function (n) { n.classList.remove("pd-src"); });
@@ -1128,9 +1355,9 @@
   }
   function bindHold(el, id, onTap) {
     var t = null, fired = false, sx = 0, sy = 0, pid = null;
-    function clear() { clearTimeout(t); t = null; }
+    function clear() { clearTimeout(t); t = null; if (!pd.active) holdOff(); }
     el.addEventListener("pointerdown", function (e) {
-      fired = false; sx = e.clientX; sy = e.clientY; pid = e.pointerId; clear();
+      fired = false; sx = e.clientX; sy = e.clientY; pid = e.pointerId; clear(); holdOn();
       t = setTimeout(function () { t = null; fired = true; try { el.setPointerCapture(pid); } catch (x) {} pdBegin(id, sx, sy); }, HOLD_MS);
     });
     el.addEventListener("pointermove", function (e) {
@@ -1145,7 +1372,161 @@
   }
   function setupPd() {
     document.addEventListener("touchmove", function (e) { if (pd.active && e.cancelable) e.preventDefault(); }, { passive: false });
+    document.addEventListener("selectstart", function (e) { if (pd.active || document.body.classList.contains("pd-hold")) e.preventDefault(); });
     document.addEventListener("keydown", function (e) { if (pd.active && e.key === "Escape") pdEnd(0, 0, true); });
+  }
+
+  /* ---------- reported-incident heat (SFPD incident reports via DataSF) ---------- */
+  var heat = { loading: false, error: "", rows: null, asOf: null, pts: [], grid: {}, cap: 3, thr: { mid: 0, high: 0 }, streets: [], count: 0, key: "off" };
+  var HEAT_BASE = "https://data.sfgov.org/resource/wg3w-h783.json";
+  var HEAT_WIN = [{ id: "all", label: "All hours" }, { id: "day", label: "Daytime (6am-6pm)" }, { id: "night", label: "Evening and night" }];
+  function toXY(lat, lng) { return { x: (lng + 122.45) * 88100, y: (lat - 37.77) * 110540 }; }
+  function inWin(h) { var w = state.heatWin; return w === "all" || (w === "day" ? (h >= 6 && h < 18) : (h < 6 || h >= 18)); }
+  function titleCase(t) { return String(t).toLowerCase().replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }
+
+  function buildHeat() {
+    if (!heat.rows) return;
+    var cells = {}, streetN = {}, n = 0;
+    heat.rows.forEach(function (r) {
+      if (!inWin(r.h)) return;
+      n++;
+      var k = r.lat.toFixed(5) + "," + r.lng.toFixed(5), c = cells[k];
+      if (!c) { var xy = toXY(r.lat, r.lng); c = cells[k] = { lat: r.lat, lng: r.lng, x: xy.x, y: xy.y, n: 0 }; }
+      c.n++;
+      String(r.st || "").split("\\").forEach(function (nm) { nm = nm.trim(); if (nm && !/TUNL|TUNNEL/.test(nm)) streetN[nm] = (streetN[nm] || 0) + 1; });
+    });
+    heat.pts = Object.keys(cells).map(function (k) { return cells[k]; });
+    heat.count = n; heat.grid = {};
+    heat.pts.forEach(function (p) { var key = Math.floor(p.x / 250) + "," + Math.floor(p.y / 250); (heat.grid[key] = heat.grid[key] || []).push(p); });
+    var ns = heat.pts.map(function (p) { return p.n; }).sort(function (a, b) { return a - b; });
+    heat.cap = ns.length ? Math.max(3, ns[Math.floor(ns.length * 0.95)]) : 3;
+    // "more" = the busiest ~12% of report locations, "some" = the next ~28%, "fewer" = everything else
+    var vals = heat.pts.map(function (p) { return heatAtXY(p.x, p.y); }).sort(function (a, b) { return a - b; });
+    heat.thr.mid = vals.length ? vals[Math.floor(vals.length * 0.6)] : 0;
+    heat.thr.high = vals.length ? vals[Math.floor(vals.length * 0.88)] : 0;
+    heat.streets = Object.keys(streetN).map(function (k) { return { name: k, n: streetN[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
+    heat.key = state.heatWin + ":" + n;
+  }
+  function heatAtXY(x, y) {
+    var ix = Math.floor(x / 250), iy = Math.floor(y / 250), v = 0;
+    for (var dx = -1; dx <= 1; dx++) for (var dy = -1; dy <= 1; dy++) {
+      var cell = heat.grid[(ix + dx) + "," + (iy + dy)]; if (!cell) continue;
+      for (var i = 0; i < cell.length; i++) { var d = Math.hypot(cell[i].x - x, cell[i].y - y); if (d < 250) { var w = 1 - d / 250; v += cell[i].n * w * w; } }
+    }
+    return v;
+  }
+  function levelOf(v) { return v >= heat.thr.high ? "high" : (v >= heat.thr.mid ? "mid" : "low"); }
+  function heatLevelAt(lat, lng) { var q = toXY(lat, lng); return levelOf(heatAtXY(q.x, q.y)); }
+  function legHeatLevel(a, b, mode) {
+    var c = legCache[legKey(a, b, mode)], pts;
+    if (c && c.ok && c.path && c.path.length > 1) pts = c.path.map(function (p) { return { lat: typeof p.lat === "function" ? p.lat() : p.lat, lng: typeof p.lng === "function" ? p.lng() : p.lng }; });
+    else pts = [{ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng }];
+    var samples = [];
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p = toXY(pts[i].lat, pts[i].lng), q = toXY(pts[i + 1].lat, pts[i + 1].lng), steps = Math.max(1, Math.ceil(Math.hypot(q.x - p.x, q.y - p.y) / 60));
+      for (var k = 0; k <= steps; k++) samples.push(heatAtXY(p.x + (q.x - p.x) * k / steps, p.y + (q.y - p.y) * k / steps));
+    }
+    samples.sort(function (x, y) { return x - y; });
+    return levelOf(samples[Math.floor(samples.length * 0.8)] || 0);
+  }
+  function heatBadge(level, scope) {
+    var t = { low: "Fewer reports ", mid: "Some reports ", high: "More reports " }[level] + scope;
+    var sp = el("span", "hl"); sp.appendChild(el("i", "hdot " + level)); sp.appendChild(document.createTextNode(t));
+    return sp;
+  }
+
+  function loadHeat() {
+    if (heat.loading || heat.rows) return;
+    heat.loading = true; heat.error = ""; renderHeatUi();
+    function getJson(u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }); }
+    Promise.all([
+      getJson(HEAT_BASE + "?$select=" + encodeURIComponent("max(incident_datetime) as latest")),
+      getJson(HEAT_BASE + "?$select=incident_category&$group=incident_category&$limit=100")
+    ]).then(function (res) {
+      var latest = res[0] && res[0][0] && res[0][0].latest ? new Date(String(res[0][0].latest).replace(" ", "T")) : new Date();
+      var cats = (res[1] || []).map(function (r) { return r.incident_category; }).filter(function (c) { return /^(larceny|robbery|assault)/i.test(c || ""); });
+      if (!cats.length) throw new Error("no categories");
+      heat.asOf = latest;
+      var since = new Date(latest.getTime() - 30 * 864e5), pad = function (n) { return (n < 10 ? "0" : "") + n; };
+      var iso = since.getFullYear() + "-" + pad(since.getMonth() + 1) + "-" + pad(since.getDate()) + "T00:00:00";
+      var where = "incident_category in(" + cats.map(function (c) { return "'" + c.replace(/'/g, "''") + "'"; }).join(",") + ") AND incident_datetime > '" + iso + "' AND latitude IS NOT NULL";
+      return getJson(HEAT_BASE + "?$select=" + encodeURIComponent("latitude,longitude,incident_datetime,intersection") + "&$where=" + encodeURIComponent(where) + "&$limit=50000");
+    }).then(function (rows) {
+      heat.rows = (rows || []).map(function (r) {
+        return { lat: parseFloat(r.latitude), lng: parseFloat(r.longitude), h: parseInt(String(r.incident_datetime || "").slice(11, 13), 10), st: r.intersection || "" };
+      }).filter(function (r) { return isFinite(r.lat) && isFinite(r.lng) && isFinite(r.h); });
+      heat.loading = false;
+      if (!heat.rows.length) { heat.error = "The police data came back empty. Try again later."; heat.rows = null; }
+      else buildHeat();
+      renderHeatUi(); refresh();
+    }).catch(function () {
+      heat.loading = false; heat.error = "Couldn't load the police data. Check your connection and try again.";
+      renderHeatUi(); refresh();
+    });
+  }
+  function setHeat(on) {
+    state.heat = on;
+    if (on) { if (!heat.rows) loadHeat(); else if (heat.key.split(":")[0] !== state.heatWin) buildHeat(); }
+    renderHeatUi(); refresh();
+  }
+  function renderHeatUi() {
+    var on = state.heat;
+    ["heatSwitch", "fsHeatSwitch"].forEach(function (id) { var c = document.getElementById(id); if (c) c.checked = on; });
+    var st = document.getElementById("heatStatus");
+    if (st) st.textContent = !on ? "" : (heat.loading ? "Loading..." : (heat.error || (heat.rows && heat.asOf ? "SFPD, 30 days to " + heat.asOf.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "")));
+  }
+  function gmHeatRender() {
+    if (!gm.map) return;
+    var key = (state.heat && heat.pts.length) ? heat.key : "off";
+    if (gm.heatKey === key) return;
+    gm.heatKey = key;
+    (gm.heatCircles || []).forEach(function (c) { c.setMap(null); }); gm.heatCircles = [];
+    if (key === "off") return;
+    heat.pts.forEach(function (p) {
+      var op = Math.min(0.5, 0.07 + 0.43 * Math.sqrt(p.n / heat.cap));
+      gm.heatCircles.push(new google.maps.Circle({ map: gm.map, center: { lat: p.lat, lng: p.lng }, radius: 120, strokeWeight: 0, fillColor: "#E4572E", fillOpacity: op, clickable: false, zIndex: 1 }));
+    });
+  }
+
+  /* ---------- local notes (a dated snapshot of news and local discussion) ---------- */
+  var NOTES = [
+    { id: "n-tenderloin", title: "Tenderloin: Jones and Ellis, Hyde and Eddy", lat: 37.7847, lng: -122.4138, tone: "watch", text: "A local outlet reports sidewalk drug use is down in 2026, but still names the Jones and Ellis corner and the Hyde and Eddy block among the worst remaining spots. New Tenderloin police district boundaries take effect this month. A neighborhood data site counted 627 police incidents in the 30 days to Oct 4, 86% non-violent, with activity peaking around midday.", src: [{ n: "Beyond Chron", t: "News", u: "https://beyondchron.org/has-sfs-tenderloin-bounced-back/", d: "Aug 2026" },{ n: "Civic Informer", t: "Data", u: "https://civicinformer.com/san-francisco/neighborhoods/tenderloin", d: "30 days to Oct 4, 2026" }] },
+    { id: "n-midmarket", title: "Mid-Market (Market St, 5th to 10th)", lat: 37.7809, lng: -122.412, tone: "watch", text: "After three shootings in three days near Market Street, the SF Chronicle reported around-the-clock police foot patrols, focused on Mid-Market. A visitor guide also calls the stretch of Market between 5th and 10th the rough part of the street.", src: [{ n: "SF Chronicle", t: "News", u: "https://www.sfchronicle.com/sf/article/market-street-shootings-police-patrols-22366266.php", d: "Jul 2026" },{ n: "Inside Guide to SF Tourism", t: "Guide", u: "https://www.inside-guide-to-san-francisco-tourism.com/san-francisco-crime.html", d: "2026" }] },
+    { id: "n-6th", title: "6th Street south of Market", lat: 37.7792, lng: -122.4086, tone: "watch", text: "A local travel guide describes 6th Street as having open-air drug use, and suggests avoiding 5th to 8th Streets after dark. Tech workers in forum threads are split: some call it the worst block they walk, others say they walk it daily without trouble.", src: [{ n: "Travel Lemming", t: "Guide", u: "https://travellemming.com/is-san-francisco-safe/", d: "2026" },{ n: "Blind forum thread", t: "Forum, anecdotal", u: "https://www.teamblind.com/post/is-this-apartment-too-good-to-be-true-lcadioew", d: "undated" }] },
+    { id: "n-16th", title: "16th and Mission BART plaza", lat: 37.765, lng: -122.4196, tone: "watch", text: "Mission Local reported a daytime stabbing at the 16th and Mission BART plaza in January. In February the mayor announced more police foot patrols, a dedicated sergeant and extra street ambassadors for the 16th and 24th Street plazas. Valencia Street, a block or two west, is the busier and more popular corridor.", src: [{ n: "Mission Local", t: "News", u: "https://missionlocal.org/2026/01/sf-mission-stabbing-16th-street/", d: "Jan 12, 2026" },{ n: "Mission Local", t: "News", u: "https://missionlocal.org/2026/02/sf-mission-district-bart-plazas-police-16th-24th-street/", d: "Feb 28, 2026" }] },
+    { id: "n-union", title: "Union Square and downtown", lat: 37.7879, lng: -122.4074, tone: "info", text: "The city has added police and street services around Market Street and Union Square. A nearby property blog says officials reported crime there fell more than 40% in early 2026, which is a secondary source, so treat it loosely. For visitors, car break-ins and phone grabs are the main issues at busy spots.", src: [{ n: "SF Chronicle", t: "News", u: "https://www.sfchronicle.com/sf/article/market-street-shootings-police-patrols-22366266.php", d: "Jul 2026" },{ n: "620 Jones (property blog)", t: "Blog, secondary", u: "https://620-jones.com/union-square-san-francisco-2026/", d: "Aug 2026" }] },
+    { id: "n-breakins", title: "Car break-in spots: Alamo Square and other tourist stops", lat: 37.7763, lng: -122.433, tone: "info", text: "Visitor guides list parking near Alamo Square, Golden Gate Park, Lands End and Alcatraz Landing among the most common break-in spots. If you drive, leave nothing in the car. This doesn't apply if you're on foot or taking rideshares.", src: [{ n: "Inside Guide to SF Tourism", t: "Guide", u: "https://www.inside-guide-to-san-francisco-tourism.com/san-francisco-crime.html", d: "2026" }] },
+    { id: "n-fidi", title: "Financial District after hours", lat: 37.7946, lng: -122.4002, tone: "info", text: "Forum posters say the Financial District empties out after office hours. Several wouldn't walk it alone at night, while others walk home from the Ferry Building regularly, so opinions split.", src: [{ n: "Blind forum thread", t: "Forum, anecdotal", u: "https://www.teamblind.com/post/is-sf-financial-district-safe-8o7wd322", d: "undated" }] },
+    { id: "n-richmond", title: "Richmond and Sunset", lat: 37.7756, lng: -122.493, tone: "calm", text: "A visitor guide lists the Richmond, Sunset and NoPa among the quietest neighborhoods for walking at night.", src: [{ n: "Travel Lemming", t: "Guide", u: "https://travellemming.com/is-san-francisco-safe/", d: "2026" }] }
+  ];
+  var TONE_COLOR = { watch: "#E0A100", info: "#5A6472", calm: "#3FA066" };
+  var TONE_GLYPH = { watch: "!", info: "i", calm: "\u2713" };
+  function noteSources(n, cls) {
+    var wrap = el("div", cls || "nsrc");
+    n.src.forEach(function (s) {
+      var a = el("a", "", s.n); a.href = s.u; a.target = "_blank"; a.rel = "noopener";
+      var sp = el("span", ""); sp.appendChild(a); sp.appendChild(document.createTextNode(" (" + s.t + ", " + s.d + ")"));
+      wrap.appendChild(sp);
+    });
+    return wrap;
+  }
+  function renderNotes() {
+    var box = document.getElementById("notesBox"), list = document.getElementById("notesList");
+    box.hidden = !state.notes;
+    ["notesBtn", "fsNotes"].forEach(function (id) { var b = document.getElementById(id); if (b) b.setAttribute("aria-pressed", state.notes ? "true" : "false"); });
+    if (!state.notes || list.childNodes.length) return;
+    NOTES.forEach(function (n) {
+      var c = el("div", "ncard"); c.id = "note-" + n.id;
+      var h = el("h4"); h.appendChild(el("i", "ndot " + n.tone)); h.appendChild(document.createTextNode(n.title));
+      c.appendChild(h); c.appendChild(el("p", "", n.text)); c.appendChild(noteSources(n));
+      list.appendChild(c);
+    });
+  }
+  function setNotes(on) { state.notes = on; renderNotes(); refresh(); }
+  function openNoteCard(id) {
+    if (!state.notes) { state.notes = true; renderNotes(); }
+    var c = document.getElementById("note-" + id);
+    if (c) { if (c.scrollIntoView) c.scrollIntoView({ behavior: "smooth", block: "center" }); c.classList.add("flash"); setTimeout(function () { c.classList.remove("flash"); }, 1600); }
   }
 
   /* ---------- map ---------- */
@@ -1185,6 +1566,13 @@
     s += poly(COAST, "land") + poly(PRESIDIO, "park") + poly(PARK, "park");
     s += '<line class="stmkt" stroke-width="' + (5 * px).toFixed(2) + '" x1="' + X(-122.3935).toFixed(1) + '" y1="' + Y(37.7955).toFixed(1) + '" x2="' + X(-122.4350).toFixed(1) + '" y2="' + Y(37.7625).toFixed(1) + '"/>';
     NBS.forEach(function (n) { s += '<text class="nb" font-size="' + (9.5 * px).toFixed(2) + '" x="' + X(n[1]).toFixed(1) + '" y="' + Y(n[2]).toFixed(1) + '" text-anchor="middle">' + esc(n[0]) + "</text>"; });
+    if (state.heat && heat.pts.length) {
+      var hp = heat.pts.slice().sort(function (a, b) { return b.n - a.n; }).slice(0, 1500);
+      hp.forEach(function (q) {
+        var op = Math.min(0.5, 0.07 + 0.43 * Math.sqrt(q.n / heat.cap));
+        s += '<circle cx="' + X(q.lng).toFixed(1) + '" cy="' + Y(q.lat).toFixed(1) + '" r="4.4" fill="#E4572E" fill-opacity="' + op.toFixed(2) + '"/>';
+      });
+    }
     var prev = pts[0];
     sim.rows.forEach(function (r, i) {
       var p = pts[i + 1];
@@ -1196,9 +1584,17 @@
     }
     ITEMS.forEach(function (it) {
       if (state.route.indexOf(it.id) >= 0) return;
+      if (state.mapFilter !== "all" && it.cat !== state.mapFilter) return;
       s += '<g data-add="' + it.id + '" style="cursor:pointer"><circle cx="' + X(it.lng).toFixed(1) + '" cy="' + Y(it.lat).toFixed(1) + '" r="' + (14 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + X(it.lng).toFixed(1) + '" cy="' + Y(it.lat).toFixed(1) + '" r="' + (3.6 * px).toFixed(2) + '" fill="var(--muted)" opacity="0.7"/><title>' + esc(it.name) + "</title></g>";
     });
-    s += '<g data-start="1" style="cursor:pointer"><rect x="' + (pts[0].x - 9 * px).toFixed(1) + '" y="' + (pts[0].y - 9 * px).toFixed(1) + '" width="' + (18 * px).toFixed(1) + '" height="' + (18 * px).toFixed(1) + '" rx="' + (4 * px).toFixed(1) + '" fill="var(--ink)" stroke="var(--bg)" stroke-width="' + (2 * px).toFixed(1) + '"/><text x="' + pts[0].x.toFixed(1) + '" y="' + (pts[0].y + 4.2 * px).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * px).toFixed(1) + '" font-weight="700" fill="var(--bg)" font-family="var(--display)">S</text><title>Start: ' + esc(st.label) + "</title></g>";
+    if (state.notes) NOTES.forEach(function (n) {
+      s += '<g data-note="' + n.id + '" style="cursor:pointer"><circle cx="' + X(n.lng).toFixed(1) + '" cy="' + Y(n.lat).toFixed(1) + '" r="' + (18 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + X(n.lng).toFixed(1) + '" cy="' + Y(n.lat).toFixed(1) + '" r="' + (10 * px).toFixed(1) + '" fill="' + TONE_COLOR[n.tone] + '" stroke="#fff" stroke-width="' + (2 * px).toFixed(1) + '"/><text x="' + X(n.lng).toFixed(1) + '" y="' + (Y(n.lat) + 4 * px).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * px).toFixed(1) + '" font-weight="800" fill="' + (n.tone === "watch" ? "#11151C" : "#fff") + '" font-family="var(--display)">' + TONE_GLYPH[n.tone] + '</text><title>' + esc(n.title) + '</title></g>';
+    });
+    if (String(st.id).indexOf("me:") === 0) {
+      s += '<g data-start="1" style="cursor:pointer"><circle cx="' + pts[0].x.toFixed(1) + '" cy="' + pts[0].y.toFixed(1) + '" r="' + (14 * px).toFixed(1) + '" fill="#2B7FFF" fill-opacity="0.2"/><circle cx="' + pts[0].x.toFixed(1) + '" cy="' + pts[0].y.toFixed(1) + '" r="' + (7 * px).toFixed(1) + '" fill="#2B7FFF" stroke="#fff" stroke-width="' + (2.5 * px).toFixed(1) + '"/><title>Your location</title></g>';
+    } else {
+      s += '<g data-start="1" style="cursor:pointer"><rect x="' + (pts[0].x - 9 * px).toFixed(1) + '" y="' + (pts[0].y - 9 * px).toFixed(1) + '" width="' + (18 * px).toFixed(1) + '" height="' + (18 * px).toFixed(1) + '" rx="' + (4 * px).toFixed(1) + '" fill="var(--ink)" stroke="var(--bg)" stroke-width="' + (2 * px).toFixed(1) + '"/><text x="' + pts[0].x.toFixed(1) + '" y="' + (pts[0].y + 4.2 * px).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * px).toFixed(1) + '" font-weight="700" fill="var(--bg)" font-family="var(--display)">S</text><title>Start: ' + esc(st.label) + "</title></g>";
+    }
     sim.rows.forEach(function (r, i) {
       var p = pts[i + 1], bad = r.issues.some(function (x) { return x.hard; });
       s += '<g data-go="' + r.it.id + '" style="cursor:pointer"><circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (20 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (12 * px).toFixed(1) + '" fill="' + (bad ? "var(--warn)" : "var(--accent)") + '" stroke="var(--bg)" stroke-width="' + (2 * px).toFixed(1) + '"/><text class="pin-n" x="' + p.x.toFixed(1) + '" y="' + (p.y + 4.4 * px).toFixed(1) + '" font-size="' + (12 * px).toFixed(1) + '">' + (i + 1) + "</text><title>" + esc(r.it.name) + "</title></g>";
@@ -1211,6 +1607,7 @@
     var vb = fitVb(items, 1, state.zoom === "city");
     box.innerHTML = svgString(sim, items, vb, box.clientWidth || 360);
     Array.prototype.forEach.call(box.querySelectorAll("[data-add]"), function (g) { g.addEventListener("click", function () { toggle(g.getAttribute("data-add")); }); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-note]"), function (g) { g.addEventListener("click", function () { openNoteCard(g.getAttribute("data-note")); }); });
     Array.prototype.forEach.call(box.querySelectorAll("[data-go]"), function (g) {
       bindHold(g, g.getAttribute("data-go"), function () {
         var row = document.getElementById("row-" + g.getAttribute("data-go"));
@@ -1258,7 +1655,12 @@
     if (!sh) { fsSheet.hidden = true; return; }
     var acts = el("div", "acts");
     function btn(label, cls, fn) { var b = el("button", "btn small " + (cls || ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); }
-    if (sh.type === "start") {
+    if (sh.type === "note") {
+      var nn = null; NOTES.forEach(function (x) { if (x.id === sh.id) nn = x; });
+      if (!nn) { fs.sheet = null; fsSheet.hidden = true; return; }
+      var hh = el("h3"); hh.appendChild(el("i", "ndot " + nn.tone)); hh.appendChild(document.createTextNode(" " + nn.title));
+      fsSheet.appendChild(hh); fsSheet.appendChild(el("p", "muted", nn.text)); fsSheet.appendChild(noteSources(nn));
+    } else if (sh.type === "start") {
       fsSheet.appendChild(el("h3", "", "Start: " + startObj().label));
       fsSheet.appendChild(el("p", "muted", "Leaving at " + fmtTime(cfgObj().startMin)));
     } else {
@@ -1291,7 +1693,8 @@
 
   function fsHandleTap(t) {
     if (!t) { if (fs.sheet) { fs.sheet = null; fsRender(); } return; }
-    if (t.getAttribute("data-go")) fs.sheet = { type: "stop", id: t.getAttribute("data-go") };
+    if (t.getAttribute("data-note")) fs.sheet = { type: "note", id: t.getAttribute("data-note") };
+    else if (t.getAttribute("data-go")) fs.sheet = { type: "stop", id: t.getAttribute("data-go") };
     else if (t.getAttribute("data-add")) fs.sheet = { type: "add", id: t.getAttribute("data-add") };
     else fs.sheet = { type: "start" };
     fsRender();
@@ -1316,14 +1719,15 @@
       try { fsMap.setPointerCapture(e.pointerId); } catch (x) {}
       var n = ptrCount();
       if (n === 1) {
-        var tgt = e.target && e.target.closest ? e.target.closest("[data-go],[data-add],[data-start]") : null;
+        var tgt = e.target && e.target.closest ? e.target.closest("[data-go],[data-add],[data-start],[data-note]") : null;
         fs.g = { mode: "pan", sx: e.clientX, sy: e.clientY, vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, moved: false, tgt: tgt };
         if (tgt && tgt.getAttribute("data-go")) {
           var holdId = tgt.getAttribute("data-go"), gg = fs.g;
+          holdOn();
           gg.timer = setTimeout(function () { gg.timer = null; if (fs.g === gg && !gg.moved) { gg.long = true; fs.sheet = null; pdBegin(holdId, gg.sx, gg.sy); } }, HOLD_MS);
         }
       } else if (n === 2) {
-        if (fs.g && fs.g.timer) { clearTimeout(fs.g.timer); fs.g.timer = null; }
+        if (fs.g && fs.g.timer) { clearTimeout(fs.g.timer); fs.g.timer = null; holdOff(); }
         var k = Object.keys(fs.ptrs), a = fs.ptrs[k[0]], b = fs.ptrs[k[1]], r = fsRect();
         var kk = fs.vb.w / r.width, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
         fs.g = { mode: "pinch", d0: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), vb0: { x: fs.vb.x, y: fs.vb.y, w: fs.vb.w }, ax: fs.vb.x + (mx - r.left) * kk, ay: fs.vb.y + (my - r.top) * kk, moved: true };
@@ -1337,7 +1741,7 @@
       if (g.mode === "pan" && ptrCount() === 1) {
         var dx = e.clientX - g.sx, dy = e.clientY - g.sy;
         if (!g.moved && Math.hypot(dx, dy) < 6) return;
-        g.moved = true; if (g.timer) { clearTimeout(g.timer); g.timer = null; }
+        g.moved = true; if (g.timer) { clearTimeout(g.timer); g.timer = null; holdOff(); }
         var k = g.vb0.w / r.width;
         fs.vb.x = g.vb0.x - dx * k; fs.vb.y = g.vb0.y - dy * k;
         fsApplyVb();
@@ -1356,7 +1760,7 @@
       var n = ptrCount(), g = fs.g;
       if (n === 0) {
         fs.g = null;
-        if (g && g.timer) { clearTimeout(g.timer); g.timer = null; }
+        if (g && g.timer) { clearTimeout(g.timer); g.timer = null; holdOff(); }
         if (g && g.long) { pdEnd(e.clientX, e.clientY, e.type === "pointercancel"); }
         else if (g && g.mode === "pan" && !g.moved) fsHandleTap(g.tgt);
         else fsRender();
@@ -1460,7 +1864,9 @@
       var lg = r.leg, txt;
       if (lg.mode === "walk") txt = "Walk " + fmtDur(lg.min) + ", " + lg.mi.toFixed(1) + " mi";
       else txt = "Muni about " + fmtDur(lg.min) + ", " + lg.mi.toFixed(1) + " mi, " + (r.legFree ? "free transfer" : money(FARE));
-      li.appendChild(el("div", "legrow" + (lg.mode === "muni" ? " muni" : ""), (i === 0 ? "From " + startObj().label + ": " : "") + txt));
+      var legEl = el("div", "legrow" + (lg.mode === "muni" ? " muni" : ""), (i === 0 ? "From " + startObj().label + ": " : "") + txt);
+      if (state.heat && heat.pts.length) legEl.appendChild(heatBadge(legHeatLevel(i === 0 ? startObj() : sim.rows[i - 1].it, r.it, lg.mode), "on this stretch"));
+      li.appendChild(legEl);
       var row = el("div", "stoprow"); row.id = "row-" + r.it.id;
       var bad = r.issues.some(function (x) { return x.hard; });
       row.appendChild(el("div", "badge" + (bad ? " bad" : ""), String(i + 1)));
@@ -1469,6 +1875,7 @@
       var when = "Arrive " + fmtTime(r.arrive) + (r.waited ? ", wait " + fmtDur(r.waited) + " until it opens" : "");
       body.appendChild(el("p", "muted", when));
       body.appendChild(el("p", "muted", statusText(r.it, state.cfg.day)));
+      if (state.heat && heat.pts.length) { var hl = el("p", "hline"); hl.appendChild(heatBadge(heatLevelAt(r.it.lat, r.it.lng), "nearby")); body.appendChild(hl); }
       r.issues.forEach(function (x) { body.appendChild(el("p", "issue", x.msg)); });
       var ctl = el("div", "ctl");
       function mk(label, aria, fn, dis) {
@@ -1634,16 +2041,11 @@
     sel.value = state.cfg.start;
     sel.addEventListener("change", function () {
       if (sel.value === "me") {
-        if (myLoc) { state.cfg.start = "me"; gm.fitKey = ""; refresh(); return; }
-        if (!navigator.geolocation) { sel.value = state.cfg.start; showToast("Location isn't available on this device."); return; }
-        showToast("Finding you...");
-        navigator.geolocation.getCurrentPosition(function (p) {
-          myLoc = { id: "me", label: "My location", lat: p.coords.latitude, lng: p.coords.longitude, q: p.coords.latitude + "," + p.coords.longitude };
-          state.cfg.start = "me"; gm.fitKey = ""; refresh();
-        }, function () { sel.value = state.cfg.start; showToast("Couldn't get your location. Check the permission."); }, { enableHighAccuracy: true, timeout: 10000 });
-        return;
+        state.cfg.startChosen = false;
+        if (myLoc) { state.cfg.start = "me"; gm.fitKey = ""; renderLocNote(); refresh(); return; }
+        pendingMe = true; locateMe(); return;
       }
-      state.cfg.start = sel.value; gm.fitKey = ""; refresh();
+      state.cfg.start = sel.value; state.cfg.startChosen = true; gm.fitKey = ""; renderLocNote(); refresh();
     });
     var tinp = document.getElementById("startTime");
     tinp.addEventListener("change", function () { state.cfg.startTime = tinp.value || "12:00"; refresh(); });
@@ -1661,8 +2063,11 @@
     r.addEventListener("input", limLabel);
     r.addEventListener("change", function () { state.cfg.walkLimit = parseFloat(r.value); limLabel(); refresh(); });
     document.getElementById("loopChk").addEventListener("change", function (e) { state.cfg.loop = e.target.checked; refresh(); });
+    document.getElementById("notesBtn").addEventListener("click", function () { setNotes(!state.notes); });
+    document.getElementById("fsNotes").addEventListener("click", function () { setNotes(!state.notes); });
     document.getElementById("zoomFit").addEventListener("click", function () { state.zoom = "fit"; if (gm.ready) gmFit(false); else refresh(); });
     document.getElementById("zoomCity").addEventListener("click", function () { state.zoom = "city"; if (gm.ready) gmFit(true); else refresh(); });
+    ["heatSwitch", "fsHeatSwitch"].forEach(function (id) { document.getElementById(id).addEventListener("change", function (e) { setHeat(e.target.checked); }); });
     document.getElementById("keySave").addEventListener("click", function () {
       var v = (document.getElementById("keyInput").value || "").trim();
       if (!v) { gm.failed = "Paste a key first."; updateKeyBanner(); return; }
@@ -1703,7 +2108,12 @@
 
   document.getElementById("tabStops").addEventListener("click", function () { setView("stops"); });
   document.getElementById("tabRoute").addEventListener("click", function () { setView("route"); });
-  document.getElementById("clear").addEventListener("click", function () { state.route = []; if (fs.open) fsSheetReset(); refresh(); });
+  document.getElementById("clear").addEventListener("click", function () {
+    if (!state.route.length) return;
+    var snap = state.route.slice(), n = snap.length;
+    state.route = []; if (fs.open) fsSheetReset(); refresh();
+    showUndo("Cleared " + n + (n === 1 ? " stop" : " stops"), function () { state.route = snap; refresh(); });
+  });
 
   var credit = document.getElementById("credit");
   if (CONFIG.credit && CONFIG.credit.text) {
@@ -1711,14 +2121,17 @@
     else credit.textContent = CONFIG.credit.text;
   }
   var fromLink = restore();
-  buildChips(); buildStops(); setupSettings(); setupFs(); setupDrag(); setupPd();
+  renderNotes();
+  fsEl.hidden = true; document.body.style.overflow = "";
+  buildChips(); buildMapChips(); buildStops(); setupSettings(); setupFs(); setupDrag(); setupPd();
   buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
   updateKeyBanner();
-  var k0 = currentKey(); if (k0) loadGoogle(k0);
+  var k0 = currentKey(); if (k0 && !SAFE) loadGoogle(k0);
   refresh();
   if (fromLink && state.route.length) setView("route");
+  if (SAFE) { showToast("Safe mode: Google map, location and saved plans are off"); } else locateMe();
 
-  window.__sfTest = { gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
+  window.__sfTest = { locState: function () { return locState; }, myLoc: function () { return myLoc; }, NOTES: NOTES, heatLevelAt: heatLevelAt, legHeatLevel: legHeatLevel, heat: heat, gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
 })();
 </script>
 </body>
