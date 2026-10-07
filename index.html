@@ -378,6 +378,7 @@
         <button class="btn ghost small" type="button" id="zoomFit">Fit my route</button>
         <button class="btn ghost small" type="button" id="zoomCity">Whole city</button>
         <button class="btn ghost small hbtn" type="button" id="notesBtn" aria-pressed="false">Local notes</button>
+        <button class="btn ghost small" type="button" id="gmTap" hidden>Use Google map</button>
         <label class="swt" title="SFPD theft, robbery and assault reports. Busy areas show more reports, so this reflects crowds as well as risk."><input type="checkbox" id="heatSwitch" role="switch" aria-label="Show crime reports on the map"><span class="swtrack" aria-hidden="true"></span><span class="swtxt">Reports</span><span class="swst" id="heatStatus" role="status"></span></label>
       </div>
       <p class="hint" style="margin: 0 0 6px;">Places shown on the map</p>
@@ -467,6 +468,7 @@
     <p class="fine">Costs are estimates. Club covers and anything marked "check" are not included in totals. Hours shown are for the day you pick, and the route planner uses them. Confirm hours before you go.</p>
   </aside>
   <footer class="footer"><span id="credit"></span><span><a href="#" id="resetKey" hidden>Remove saved Google key</a></span></footer>
+  <p class="fine" id="disclaimer">An unofficial planning aid, not affiliated with any place listed. Hours, prices, ratings and local notes can be wrong or out of date, so confirm before you go. Everything runs in your browser. Your location and picks stay on your device and are not sent to us. The page loads Google Fonts, SF open data if you turn Reports on, and Google Maps if it is switched on.</p>
 </div>
 
 
@@ -544,6 +546,11 @@
     googleMapsApiKey: (typeof window.SF_GUIDE_KEY === "string" ? window.SF_GUIDE_KEY : ""),   // set in config.js, or use the box on the Map and route tab
     credit: { text: "Designed and built by Joaquin", url: "https://joaquinboehmer.framer.website" }
   };
+  // Cost and safety options. Set them in config.js: window.SF_GUIDE_OPTS = { googleMode: "tap", routing: true, maxRoutesPerSession: 25 };
+  var OPTS = { googleMode: "auto", routing: true, maxRoutesPerSession: 40 };
+  (function () { var o = window.SF_GUIDE_OPTS; if (o && typeof o === "object") Object.keys(OPTS).forEach(function (k) { if (o[k] !== undefined) OPTS[k] = o[k]; }); })();
+  var routeCalls = 0;
+  try { routeCalls = parseInt(sessionStorage.getItem("sfdg:rc") || "0", 10) || 0; } catch (e) {}
   var FARE = 2.75, STREET = 1.3, WALK_MIN_PER_MI = 20, TRANSFER_MIN = 90;
   var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   var DAYS_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -1118,14 +1125,16 @@
   }
 
   function updateKeyBanner() {
-    document.getElementById("keyBox").hidden = gm.ready || gm.loading;
+    var haveKey = !!currentKey(), tapMode = haveKey && OPTS.googleMode === "tap" && !SAFE;
+    document.getElementById("keyBox").hidden = gm.ready || gm.loading || (tapMode && !gm.failed);
+    var tb = document.getElementById("gmTap"); if (tb) tb.hidden = !(tapMode && !gm.ready && !gm.loading && !gm.failed);
     var msg = document.getElementById("keyMsg"); msg.hidden = !gm.failed; msg.textContent = gm.failed || "";
     document.getElementById("resetKey").hidden = !storedKey();
   }
   function teardownGoogle() {
     gm.ready = false; gm.loading = false;
     if (gm.host && gm.host.parentNode) gm.host.parentNode.removeChild(gm.host);
-    gm.host = null; gm.map = null; gm.overlays = []; gm.lines = []; gm.fitKey = ""; gm.heatKey = ""; gm.heatCircles = [];
+    gm.host = null; gm.map = null; gm.overlays = []; gm.lines = []; gm.fitKey = ""; gm.heatKey = ""; gm.heatOv = null;
     fsEl.classList.remove("google");
   }
   function makeMarkerClass() {
@@ -1140,6 +1149,18 @@
       onRemove() { if (this.el.parentNode) this.el.parentNode.removeChild(this.el); }
     }
     gm.Marker = HtmlMarker;
+    // A real heat layer: soft blobs of a fixed size on screen, summed and colored, so streets stay readable at every zoom.
+    class HeatOverlay extends google.maps.OverlayView {
+      constructor(map) {
+        super(); this.map = map; this.cv = document.createElement("canvas");
+        this.cv.style.position = "absolute"; this.cv.style.pointerEvents = "none"; this.cv.className = "heatcv";
+        this.setMap(map);
+      }
+      onAdd() { this.getPanes().overlayLayer.appendChild(this.cv); }
+      onRemove() { if (this.cv.parentNode) this.cv.parentNode.removeChild(this.cv); }
+      draw() { drawHeatCanvas(this); }
+    }
+    gm.HeatOverlay = HeatOverlay;
   }
   function loadGoogle(key) {
     if (!key || gm.loading || gm.ready) return;
@@ -1152,7 +1173,10 @@
       console.error = function () {
         try {
           var m = Array.prototype.join.call(arguments, " "), x = m.match(/Google Maps JavaScript API (?:error|warning): (\w+)/);
-          if (x && !gm.errCode) gm.errCode = x[1];
+          if (x) {
+            gm.errCode = x[1];
+            if (gm.ready && /OverQuota|RequestDenied|ExpiredKey|ApiTargetBlocked|BillingNotEnabled|ApiNotActivated|InvalidKey|RefererNotAllowed|MissingKey/.test(x[1])) setTimeout(function () { if (window.gm_authFailure) window.gm_authFailure(); }, 120);
+          }
         } catch (e) {}
         return oe.apply(console, arguments);
       };
@@ -1167,6 +1191,7 @@
           InvalidKeyMapError: "Google doesn't recognize this key. Check that it was copied in full.",
           ApiTargetBlockedMapError: "The key's API restrictions don't include the Maps JavaScript API. Add it, then reload.",
           RequestDeniedMapError: "Google denied the request. Check the key's restrictions and enabled APIs.",
+          OverQuotaMapError: "The daily Google map limit was reached, so you are seeing the built-in map. It resets tomorrow.",
           ExpiredKeyMapError: "This key has expired.",
           MissingKeyMapError: "No key was provided."
         }[c];
@@ -1189,7 +1214,7 @@
     gm.map = new google.maps.Map(host, {
       center: { lat: 37.7749, lng: -122.4194 }, zoom: 13, disableDefaultUI: true, zoomControl: true,
       zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
-      gestureHandling: "cooperative", clickableIcons: false, styles: gmStyles(), backgroundColor: "#cfdcec"
+      gestureHandling: "cooperative", clickableIcons: false, styles: gmStyles(), backgroundColor: isDark() ? "#121A29" : "#CFDCEC"
     });
     return gm.map;
   }
@@ -1262,6 +1287,12 @@
     if (gm.busy || !gm.queue.length || !gm.ready) return;
     gm.busy = true;
     var j = gm.queue.shift();
+    if (!OPTS.routing || routeCalls >= OPTS.maxRoutesPerSession) {
+      legCache[j.key] = { ok: false }; delete gm.pending[j.key]; legVer++; gm.busy = false;
+      clearTimeout(gm.rt); gm.rt = setTimeout(refresh, 150); setTimeout(pump, 0);
+      return;
+    }
+    routeCalls++; try { sessionStorage.setItem("sfdg:rc", String(routeCalls)); } catch (e) {}
     fetchLeg(j).then(function (r) { legCache[j.key] = r; }, function () { legCache[j.key] = { ok: false }; }).then(function () {
       delete gm.pending[j.key]; legVer++; gm.busy = false;
       clearTimeout(gm.rt); gm.rt = setTimeout(refresh, 150);
@@ -1450,11 +1481,15 @@
       var k = r.lat.toFixed(5) + "," + r.lng.toFixed(5), c = cells[k];
       if (!c) { var xy = toXY(r.lat, r.lng); c = cells[k] = { lat: r.lat, lng: r.lng, x: xy.x, y: xy.y, n: 0 }; }
       c.n++;
-      String(r.st || "").split("\\").forEach(function (nm) { nm = nm.trim(); if (nm && !/TUNL|TUNNEL/.test(nm)) streetN[nm] = (streetN[nm] || 0) + 1; });
+      String(r.st || "").split("\\").forEach(function (nm) {
+        nm = nm.trim();
+        if (nm && !/TUNL|TUNNEL/.test(nm)) { streetN[nm] = (streetN[nm] || 0) + 1; (c.st || (c.st = {}))[nm] = 1; }
+      });
     });
     heat.pts = Object.keys(cells).map(function (k) { return cells[k]; });
     heat.count = n; heat.grid = {};
     heat.pts.forEach(function (p) { var key = Math.floor(p.x / 250) + "," + Math.floor(p.y / 250); (heat.grid[key] = heat.grid[key] || []).push(p); });
+    buildStreetSegments();
     var ns = heat.pts.map(function (p) { return p.n; }).sort(function (a, b) { return a - b; });
     heat.cap = ns.length ? Math.max(3, ns[Math.floor(ns.length * 0.95)]) : 3;
     // "more" = the busiest ~12% of report locations, "some" = the next ~28%, "fewer" = everything else
@@ -1551,17 +1586,96 @@
     var st = document.getElementById("heatStatus");
     if (st) st.textContent = !on ? "" : (heat.loading ? "Loading..." : (heat.error || (heat.rows && heat.asOf ? "SFPD, 30 days to " + heat.asOf.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "")));
   }
+  // Join neighbouring report locations that sit on the same street into line segments, so the layer follows the streets.
+  function buildStreetSegments() {
+    var byStreet = {}, segs = [], seen = {}, used = {};
+    heat.pts.forEach(function (p, idx) { p.id = idx; Object.keys(p.st || {}).forEach(function (nm) { (byStreet[nm] = byStreet[nm] || []).push(p); }); });
+    Object.keys(byStreet).forEach(function (nm) {
+      var L = byStreet[nm]; if (L.length < 2) return;
+      var mx = 0, my = 0, sxx = 0, syy = 0, sxy = 0, i;
+      L.forEach(function (p) { mx += p.x; my += p.y; }); mx /= L.length; my /= L.length;
+      L.forEach(function (p) { var dx = p.x - mx, dy = p.y - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; });
+      var ang = 0.5 * Math.atan2(2 * sxy, sxx - syy), cx = Math.cos(ang), cy = Math.sin(ang);
+      L.sort(function (a, b) { return ((a.x - mx) * cx + (a.y - my) * cy) - ((b.x - mx) * cx + (b.y - my) * cy); });
+      for (i = 0; i < L.length - 1; i++) {
+        var a = L[i], b = L[i + 1], d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > 330 || d < 5) continue;
+        var key = a.id < b.id ? a.id + "|" + b.id : b.id + "|" + a.id;
+        if (seen[key]) continue;
+        seen[key] = 1; used[a.id] = 1; used[b.id] = 1;
+        segs.push({ a: a, b: b, v: (a.n + b.n) / 2 });
+      }
+    });
+    var vs = segs.map(function (g) { return g.v; }).sort(function (x, y) { return x - y; });
+    segs.forEach(function (g) {
+      var lo = 0, hi = vs.length; while (lo < hi) { var mid = (lo + hi) >> 1; if (vs[mid] < g.v) lo = mid + 1; else hi = mid; }
+      var lo2 = lo; hi = vs.length; while (lo2 < hi) { var m2 = (lo2 + hi) >> 1; if (vs[m2] <= g.v) lo2 = m2 + 1; else hi = m2; }
+      g.r = vs.length > 1 ? ((lo + lo2) / 2) / (vs.length - 1) : 1; if (g.r > 1) g.r = 1;
+    });
+    segs.sort(function (a, b) { return a.r - b.r; });
+    heat.segs = segs;
+    var nvs = heat.pts.map(function (p) { return p.n; }).sort(function (x, y) { return x - y; });
+    heat.stubs = heat.pts.filter(function (p) { return !used[p.id]; }).map(function (p) {
+      var lo = 0, hi = nvs.length; while (lo < hi) { var mid = (lo + hi) >> 1; if (nvs[mid] < p.n) lo = mid + 1; else hi = mid; }
+      return { p: p, r: nvs.length > 1 ? lo / (nvs.length - 1) : 1 };
+    });
+  }
+  var HEAT_PAL = null;
+  function heatPalette() {
+    if (HEAT_PAL) return HEAT_PAL;
+    var c = document.createElement("canvas"); c.width = 256; c.height = 1;
+    var x = c.getContext("2d"); if (!x) return null;
+    var g = x.createLinearGradient(0, 0, 256, 0);
+    g.addColorStop(0, "rgb(255,214,102)"); g.addColorStop(0.4, "rgb(244,150,62)"); g.addColorStop(0.7, "rgb(232,92,48)"); g.addColorStop(1, "rgb(190,42,42)");
+    x.fillStyle = g; x.fillRect(0, 0, 256, 1);
+    HEAT_PAL = x.getImageData(0, 0, 256, 1).data; return HEAT_PAL;
+  }
+  function paintStreets(ctx, w, h, project, lw) {
+    // Draw each street segment as a colored line: yellow for fewer reports, red for the most.
+    ctx.clearRect(0, 0, w, h);
+    var pal = heatPalette(); if (!pal || !heat.segs) return;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    var i, g, a, b, k, r;
+    function col(r, alpha) { var kk = Math.floor((0.10 + 0.90 * r) * 255) * 4; return "rgba(" + pal[kk] + "," + pal[kk + 1] + "," + pal[kk + 2] + "," + alpha.toFixed(2) + ")"; }
+    // faint dark casing first so the lines stay readable on any map
+    ctx.strokeStyle = "rgba(10,12,18,0.28)";
+    for (i = 0; i < heat.segs.length; i++) {
+      g = heat.segs[i]; a = project(g.a); b = project(g.b); if (!a || !b) continue;
+      if ((a.x < -20 && b.x < -20) || (a.y < -20 && b.y < -20) || (a.x > w + 20 && b.x > w + 20) || (a.y > h + 20 && b.y > h + 20)) continue;
+      ctx.lineWidth = lw * (0.8 + 0.9 * g.r) + 1.6;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    for (i = 0; i < heat.segs.length; i++) {
+      g = heat.segs[i]; a = project(g.a); b = project(g.b); if (!a || !b) continue;
+      if ((a.x < -20 && b.x < -20) || (a.y < -20 && b.y < -20) || (a.x > w + 20 && b.x > w + 20) || (a.y > h + 20 && b.y > h + 20)) continue;
+      ctx.strokeStyle = col(g.r, 0.62 + 0.33 * g.r); ctx.lineWidth = lw * (0.8 + 0.9 * g.r);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    // locations with no neighbouring segment get a small dot
+    for (i = 0; i < (heat.stubs || []).length; i++) {
+      var st = heat.stubs[i]; a = project(st.p); if (!a) continue;
+      if (a.x < -20 || a.y < -20 || a.x > w + 20 || a.y > h + 20) continue;
+      ctx.fillStyle = col(st.r, 0.8); ctx.beginPath(); ctx.arc(a.x, a.y, Math.max(1.6, lw * 0.55), 0, 6.2832); ctx.fill();
+    }
+  }
+  function drawHeatCanvas(ov) {
+    var pr = ov.getProjection(), map = ov.map; if (!pr || !map) return;
+    var div = map.getDiv(), w = div.clientWidth, h = div.clientHeight, b = map.getBounds(); if (!w || !h || !b) return;
+    var ne = b.getNorthEast(), sw = b.getSouthWest(), tl = pr.fromLatLngToDivPixel(new google.maps.LatLng(ne.lat(), sw.lng()));
+    if (!tl) return;
+    var cv = ov.cv; cv.style.left = tl.x + "px"; cv.style.top = tl.y + "px";
+    if (cv.width !== w) cv.width = w; if (cv.height !== h) cv.height = h; cv.style.width = w + "px"; cv.style.height = h + "px";
+    var ctx = cv.getContext("2d"); if (!ctx) return;
+    if (!state.heat || !heat.pts.length) { ctx.clearRect(0, 0, w, h); return; }
+    var z = map.getZoom() || 13, lw = z <= 12 ? 1.8 : (z === 13 ? 2.3 : (z === 14 ? 3 : (z === 15 ? 3.8 : 5)));
+    paintStreets(ctx, w, h, function (p) { var q = pr.fromLatLngToDivPixel(new google.maps.LatLng(p.lat, p.lng)); return q ? { x: q.x - tl.x, y: q.y - tl.y } : null; }, lw);
+  }
   function gmHeatRender() {
     if (!gm.map) return;
-    var key = (state.heat && heat.pts.length) ? heat.key : "off";
-    if (gm.heatKey === key) return;
-    gm.heatKey = key;
-    (gm.heatCircles || []).forEach(function (c) { c.setMap(null); }); gm.heatCircles = [];
-    if (key === "off") return;
-    heat.pts.forEach(function (p) {
-      var op = Math.min(0.5, 0.07 + 0.43 * Math.sqrt(p.n / heat.cap));
-      gm.heatCircles.push(new google.maps.Circle({ map: gm.map, center: { lat: p.lat, lng: p.lng }, radius: 120, strokeWeight: 0, fillColor: "#E4572E", fillOpacity: op, clickable: false, zIndex: 1 }));
-    });
+    var on = !!(state.heat && heat.pts.length);
+    if (!on) { if (gm.heatOv) { gm.heatOv.setMap(null); gm.heatOv = null; } gm.heatKey = "off"; return; }
+    if (!gm.heatOv) { if (!gm.HeatOverlay) return; gm.heatOv = new gm.HeatOverlay(gm.map); gm.heatKey = heat.key; return; }
+    if (gm.heatKey !== heat.key) { gm.heatKey = heat.key; gm.heatOv.draw(); }
   }
 
   /* ---------- local notes (a dated snapshot of news and local discussion) ---------- */
@@ -1743,11 +1857,16 @@
     s += '<line class="stmkt" stroke-width="' + (5 * px).toFixed(2) + '" x1="' + X(-122.3935).toFixed(1) + '" y1="' + Y(37.7955).toFixed(1) + '" x2="' + X(-122.4350).toFixed(1) + '" y2="' + Y(37.7625).toFixed(1) + '"/>';
     NBS.forEach(function (n) { s += '<text class="nb" font-size="' + (9.5 * px).toFixed(2) + '" x="' + X(n[1]).toFixed(1) + '" y="' + Y(n[2]).toFixed(1) + '" text-anchor="middle">' + esc(n[0]) + "</text>"; });
     if (state.heat && heat.pts.length) {
-      var hp = heat.pts.slice().sort(function (a, b) { return b.n - a.n; }).slice(0, 1500);
-      hp.forEach(function (q) {
-        var op = Math.min(0.5, 0.07 + 0.43 * Math.sqrt(q.n / heat.cap));
-        s += '<circle cx="' + X(q.lng).toFixed(1) + '" cy="' + Y(q.lat).toFixed(1) + '" r="4.4" fill="#E4572E" fill-opacity="' + op.toFixed(2) + '"/>';
-      });
+      try {
+        var cw = Math.max(60, Math.round(widthPx || 360)), ch = Math.max(60, Math.round(cw * vb.h / vb.w)), hc = document.createElement("canvas");
+        hc.width = cw; hc.height = ch;
+        var hx = hc.getContext("2d");
+        if (hx) {
+          var frac = Math.min(1, vb.w / 520), hlw = 1.8 + 2.8 * (1 - frac);
+          paintStreets(hx, cw, ch, function (pp) { return { x: (X(pp.lng) - vb.x) / vb.w * cw, y: (Y(pp.lat) - vb.y) / vb.h * ch }; }, hlw);
+          s += '<image x="' + vb.x.toFixed(1) + '" y="' + vb.y.toFixed(1) + '" width="' + vb.w.toFixed(1) + '" height="' + vb.h.toFixed(1) + '" preserveAspectRatio="none" href="' + hc.toDataURL("image/png") + '"/>';
+        }
+      } catch (e) { /* no canvas support: skip the heat layer */ }
     }
     var prev = pts[0];
     sim.rows.forEach(function (r, i) {
@@ -2247,6 +2366,7 @@
     document.getElementById("zoomFit").addEventListener("click", function () { state.zoom = "fit"; if (gm.ready) gmFit(false); else refresh(); });
     document.getElementById("zoomCity").addEventListener("click", function () { state.zoom = "city"; if (gm.ready) gmFit(true); else refresh(); });
     ["heatSwitch", "fsHeatSwitch"].forEach(function (id) { document.getElementById(id).addEventListener("change", function (e) { setHeat(e.target.checked); }); });
+    document.getElementById("gmTap").addEventListener("click", function () { var k = currentKey(); if (k) loadGoogle(k); });
     document.getElementById("keySave").addEventListener("click", function () {
       var v = (document.getElementById("keyInput").value || "").trim();
       if (!v) { gm.failed = "Paste a key first."; updateKeyBanner(); return; }
@@ -2305,7 +2425,7 @@
   buildChips(); buildMapChips(); buildStops(); setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd(); setupAlong();
   buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
   updateKeyBanner();
-  var k0 = currentKey(); if (k0 && !SAFE) loadGoogle(k0);
+  var k0 = currentKey(); if (k0 && !SAFE && OPTS.googleMode !== "tap") loadGoogle(k0);
   refresh();
   if (fromLink && state.route.length) setView("route");
   if (SAFE) { showToast("Safe mode: Google map, location and saved plans are off"); } else locateMe();
