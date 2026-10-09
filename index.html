@@ -93,7 +93,7 @@
   .facts li::before { content: ""; display: inline-block; vertical-align: middle; width: 6px; height: 6px; margin: -2px 8px 0 0; border-radius: 50%; background: var(--accent); }
   .barrow { display: flex; gap: 8px; align-items: stretch; margin-bottom: 8px; }
   .barrow .tabs { flex: 1; margin: 0; min-width: 0; }
-  .daysel { flex: 0 0 auto; font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--ink); background-color: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0 30px 0 14px; min-height: 44px; -webkit-appearance: none; appearance: none; cursor: pointer;
+  .daysel { flex: 0 0 auto; font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--ink); background-color: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 0 36px 0 18px; min-height: 44px; -webkit-appearance: none; appearance: none; cursor: pointer;
     background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
   .rvhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .rvhead h2 { margin: 0; }
@@ -102,13 +102,13 @@
     .hero h1 { font-size: 3.6rem; }
     .hero p.lede { font-size: 1.15rem; }
   }
-  .cta .btn { min-height: 48px; padding: 12px 20px; font-size: 1rem; display: inline-flex; align-items: center; }
+  .cta .btn { min-height: 52px; padding: 12px 26px; font-size: 1rem; display: inline-flex; align-items: center; }
   .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 18px; border-bottom: 1px solid var(--line); margin: 0 -18px; }
   .sum { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 0.95rem; }
   .sum strong { font-weight: 600; }
   .linkbtn { font: inherit; font-size: 0.9rem; color: var(--muted); background: none; border: 0; padding: 6px 4px; cursor: pointer; text-decoration: underline; }
-  .tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 3px; margin-bottom: 8px; }
-  .tab { flex: 1; font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 9px; padding: 8px 10px; cursor: pointer; }
+  .tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-bottom: 8px; }
+  .tab { flex: 1; font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px 10px; cursor: pointer; }
   .tab[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
   .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
@@ -120,7 +120,7 @@
   section h2 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; margin: 0 0 4px; }
   .section-note { margin: 0 0 12px; color: var(--muted); font-size: 0.92rem; }
   ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 18px 18px 16px; }
   .card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .card h3 { font-family: var(--display); font-weight: 700; font-size: 1.12rem; line-height: 1.2; margin: 0; }
   .where { color: var(--muted); font-size: 0.88rem; margin: 2px 0 0; }
@@ -128,9 +128,9 @@
   .meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 10px; font-size: 0.9rem; }
   .meta dt { color: var(--muted); }
   .meta dd { margin: 0; }
-  .status { display: inline-block; font-size: 0.82rem; border-radius: 6px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+  .status { display: inline-block; font-size: 0.82rem; border-radius: 999px; padding: 3px 11px; border: 1px solid var(--line); color: var(--muted); }
   .status.closed { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
-  .add { font: inherit; font-size: 0.92rem; font-weight: 600; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+  .add { font: inherit; font-size: 0.92rem; font-weight: 600; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
   .add[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
   .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .row .status { justify-self: start; }
@@ -141,13 +141,13 @@
   .rv h2 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; margin: 0 0 4px; }
   .rv h3 { font-family: var(--display); font-weight: 700; font-size: 1.15rem; margin: 22px 0 8px; }
   .hint { color: var(--muted); font-size: 0.9rem; margin: 0 0 10px; }
-  .empty { background: var(--card); border: 1px dashed var(--line); border-radius: 14px; padding: 22px 16px; text-align: center; }
+  .empty { background: var(--card); border: 1px dashed var(--line); border-radius: 24px; padding: 22px 16px; text-align: center; }
   .empty p { margin: 0 0 12px; }
-  .btn { font: inherit; font-size: 0.93rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn { font: inherit; font-size: 0.93rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px; padding: 10px 20px; cursor: pointer; text-decoration: none; display: inline-block; }
   .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
   .btn.small { padding: 6px 11px; font-size: 0.86rem; }
   .maptools { display: flex; gap: 8px; margin-bottom: 8px; }
-  .map-box svg { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--water); }
+  .map-box svg { display: block; width: 100%; height: auto; border-radius: 26px; border: 1px solid var(--line); background: var(--water); }
   .sea { fill: var(--water); }
   .land { fill: var(--land); stroke: var(--line); stroke-width: 1; }
   .park { fill: var(--park); }
@@ -161,26 +161,26 @@
   .sw.dot { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--muted); opacity: 0.7; }
   .sw.warn { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--warn); }
 
-  details.set { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px 14px 14px; margin-top: 16px; }
+  details.set { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 4px 14px 14px; margin-top: 16px; }
   details.set summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
   .field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin-top: 10px; font-size: 0.93rem; min-width: 0; }
   .field label { color: var(--muted); }
-  .field select, .field input[type="time"] { font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); height: 44px; width: 100%; min-width: 0; max-width: 100%; display: block; -webkit-appearance: none; appearance: none; text-align: left; }
-  .field select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 19px, calc(100% - 14px) 19px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 34px; }
+  .field select, .field input[type="time"] { font: inherit; padding: 9px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); height: 44px; width: 100%; min-width: 0; max-width: 100%; display: block; -webkit-appearance: none; appearance: none; text-align: left; }
+  .field select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 24px) 19px, calc(100% - 18px) 19px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 34px; }
   .field input[type="time"]::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
   .field input[type="time"]::-webkit-datetime-edit { padding: 0; }
   .field input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 32px; }
-  .seg { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-  .seg button { flex: 1; font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 8px; cursor: pointer; }
+  .seg { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .seg button { flex: 1; font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 8px; cursor: pointer; }
   .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
   .check { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.93rem; }
   .check input { width: 20px; height: 20px; accent-color: var(--accent); }
 
   .cmp { display: grid; gap: 10px; }
-  .opt { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .opt { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 12px 14px; }
   .opt.rec { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .opt h4 { font-family: var(--display); font-size: 1.02rem; margin: 0 0 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .tag { font-size: 0.74rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 2px 7px; font-family: var(--body); }
+  .tag { font-size: 0.74rem; font-weight: 600; background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 2px 9px; font-family: var(--body); }
   .opt .nums { font-size: 0.95rem; margin: 2px 0; }
   .opt .seq { font-size: 0.85rem; color: var(--muted); margin: 4px 0 8px; }
   .opt .ok { font-size: 0.85rem; color: var(--muted); margin: 0 0 8px; }
@@ -191,7 +191,7 @@
   .legrow.muni { border-left-style: dashed; border-left-color: var(--ink); }
   .tl li { position: relative; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
   .tl li.dragging { z-index: 20; transition: none; }
-  .stoprow { position: relative; display: grid; grid-template-columns: 36px 1fr; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 6px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+  .stoprow { position: relative; display: grid; grid-template-columns: 36px 1fr; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 12px; margin-bottom: 6px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
   .stoprow.flash { box-shadow: 0 0 0 2px var(--accent); }
   .stoprow.pressing { transform: scale(0.985); }
   .stoprow.lifted { transform: scale(1.025); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3); border-color: var(--accent); }
@@ -207,7 +207,7 @@
   .stoprow .issue { color: var(--warn); font-weight: 500; }
   .ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
 
-  .totals { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 14px; }
+  .totals { background: var(--card); border: 1px solid var(--line); border-radius: 26px; padding: 14px; margin-top: 14px; }
   .totals p { margin: 0 0 6px; font-size: 0.95rem; }
   .totals .big { font-family: var(--display); font-weight: 800; font-size: 1.4rem; margin-bottom: 8px; }
   .totals .fine { color: var(--muted); font-size: 0.84rem; }
@@ -220,12 +220,13 @@
   .mapfs-body { position: relative; flex: 1; min-height: 0; overflow: hidden; }
   #fsMap { position: absolute; inset: 0; touch-action: none; -webkit-user-select: none; user-select: none; cursor: grab; }
   #fsMap svg { display: block; width: 100%; height: 100%; border: 0; border-radius: 0; background: var(--water); }
-  .mapfs-ctl { position: absolute; right: 12px; top: 12px; display: grid; gap: 8px; z-index: 2; }
+  .mapfs-ctl { position: absolute; right: 12px; top: 12px; display: grid; gap: 8px; z-index: 2; justify-items: end; }
+  #fsIn, #fsOut { width: 44px; padding: 0; font-size: 1.3rem; line-height: 1; }
   .mapfs-ctl button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  .mapfs-ctl button { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 700 1.05rem var(--body); cursor: pointer; }
-  .mapfs-legend { position: absolute; left: 12px; top: 12px; z-index: 2; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; display: grid; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+  .mapfs-ctl button { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 700 1.05rem var(--body); cursor: pointer; }
+  .mapfs-legend { position: absolute; left: 12px; top: 12px; z-index: 2; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 6px 10px; display: grid; gap: 4px; font-size: 0.8rem; color: var(--muted); }
   .mapfs-legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .sheet { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 3; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+  .sheet { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 3; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
   .sheet h3 { font-family: var(--display); font-size: 1.1rem; margin: 0 0 4px; }
   .sheet p { margin: 2px 0; font-size: 0.92rem; }
   .sheet .muted { color: var(--muted); }
@@ -236,41 +237,43 @@
   /* Day bar, banners, toast */
   .daybar { margin-top: 18px; }
   .daybar .lbl, .field .lbl { display: block; color: var(--muted); font-size: 0.88rem; margin-bottom: 6px; }
-  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 80; max-width: 88vw; text-align: center; }
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); padding: 12px 22px; border-radius: 28px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 80; max-width: 88vw; text-align: center; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
-  .keybox { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+  .keybox { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; margin-bottom: 12px; }
   .keybox strong { font-family: var(--display); font-size: 1.05rem; }
   .keybox p { margin: 4px 0 10px; font-size: 0.9rem; color: var(--muted); }
   .keyrow { display: flex; gap: 8px; }
-  .keyrow input { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; padding: 9px 12px; height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .keyrow input { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; padding: 9px 12px; height: 42px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
   .keybox .err { color: var(--warn); margin: 8px 0 0; }
   .footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.88rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between; }
   .footer a { color: var(--ink); }
 
   /* Google map */
-  #gmap { width: 100%; height: min(54vh, 460px); border-radius: 14px; border: 1px solid var(--line); background: var(--water); overflow: hidden; }
+  #gmap { width: 100%; height: min(54vh, 460px); border-radius: 26px; border: 1px solid var(--line); background: var(--water); overflow: hidden; }
   #fsGoogle { position: absolute; inset: 0; }
   #fsGoogle #gmap { height: 100%; border-radius: 0; border: 0; }
-  .mapfs.google #fsMap, .mapfs.google #fsIn, .mapfs.google #fsOut { display: none; }
+  .mapfs.google #fsMap { display: none; }
   .mapfs:not(.google) #fsGoogle { display: none; }
   .gmk { position: absolute; transform: translate(-50%, -50%); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .gmk.pin { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); border: 2.5px solid #fff; display: grid; place-items: center; font: 800 13px var(--display); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
   .gmk.pin.bad { background: var(--warn); }
-  .gmk.start { width: 26px; height: 26px; border-radius: 7px; background: #11151C; color: #fff; border: 2.5px solid #fff; display: grid; place-items: center; font: 800 12px var(--display); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+  .gmk.start { width: 26px; height: 26px; border-radius: 9px; background: #11151C; color: #fff; border: 2.5px solid #fff; display: grid; place-items: center; font: 800 12px var(--display); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
   .gmk.dot { width: 28px; height: 28px; }
   .gmk.dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 11px; border-radius: 50%; background: #6B7585; border: 2px solid #fff; transform: translate(-50%, -50%); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
   .btn.row2 { display: inline-block; margin-right: 8px; }
 
 
   /* Undo bar */
-  .undo { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 16px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; display: flex; align-items: center; gap: 16px; }
+  .undo { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 28px; padding: 8px 8px 8px 22px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; display: flex; align-items: center; gap: 16px; }
   .undo, .toast { width: max-content; max-width: calc(100vw - 32px); }
+  .undo #undoBtn { white-space: nowrap; text-decoration: none; background: var(--bg); color: var(--ink); border-radius: 999px; padding: 0 14px; flex: 0 0 auto; }
+  body.fs-open .undo, body.fs-open .toast { bottom: auto; top: calc(12px + env(safe-area-inset-top, 0px)); }
   .undo.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
   .undo button { font: inherit; font-weight: 700; color: var(--bg); background: none; border: 0; text-decoration: underline; padding: 6px 2px; cursor: pointer; }
 
 
   /* Hold-and-drag a pin */
-  .draghint { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 16px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; text-align: center; }
+  .draghint { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 28px; padding: 12px 22px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; text-align: center; }
   .draghint.show { opacity: 1; transform: translate(-50%, 0); }
   .pdghost { position: fixed; z-index: 95; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); border: 3px solid #fff; display: grid; place-items: center; font: 800 16px var(--display); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38); pointer-events: none; transform: scale(1.12); }
   .pd-src { opacity: 0.3; }
@@ -287,7 +290,7 @@
 
 
   /* Reported-incident heat */
-  .heatbox { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .heatbox { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 12px 14px; }
   .heatrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .heatrow .heatst { font-size: 0.88rem; color: var(--muted); }
   .hbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
@@ -307,11 +310,11 @@
 
   /* Local notes */
   .maptools { flex-wrap: wrap; }
-  .notebox { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .notebox { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 12px 14px; }
   .notebox h3 { margin: 0 0 4px; font-size: 1.1rem; }
   .notebox .intro { margin: 0 0 10px; font-size: 0.86rem; color: var(--muted); }
   .ncard { border-top: 1px solid var(--line); padding: 12px 0 4px; }
-  .ncard.flash { box-shadow: 0 0 0 2px var(--accent); border-radius: 10px; padding-left: 8px; padding-right: 8px; }
+  .ncard.flash { box-shadow: 0 0 0 2px var(--accent); border-radius: 16px; padding-left: 8px; padding-right: 8px; }
   .ncard h4 { font-family: var(--display); font-size: 1rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
   .ncard p { margin: 0 0 8px; font-size: 0.92rem; }
   .nsrc { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.84rem; margin: 0 0 8px; }
@@ -333,7 +336,7 @@
 
   /* Error bar */
   .errbar { position: fixed; left: 0; right: 0; top: 0; z-index: 120; background: #B8400A; color: #fff; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; font-size: 0.9rem; display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
-  .errbar button { font: inherit; font-weight: 700; color: #fff; background: none; border: 1.5px solid #fff; border-radius: 8px; padding: 4px 12px; cursor: pointer; flex: 0 0 auto; }
+  .errbar button { font: inherit; font-weight: 700; color: #fff; background: none; border: 1.5px solid #fff; border-radius: 999px; padding: 4px 12px; cursor: pointer; flex: 0 0 auto; }
 
   /* Debug panel (add ?debug=1 to the address) */
   .dbg { position: fixed; left: 0; right: 0; bottom: 0; max-height: 40vh; overflow: auto; z-index: 130; background: #0b0d12; color: #d7e0ee; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); white-space: pre-wrap; word-break: break-word; border-top: 2px solid #E4572E; }
@@ -355,10 +358,8 @@
   html, body { overflow-anchor: none; }
 
   /* Route to a last stop */
-  .alongbox { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px 14px 14px; margin: 12px 0; }
-  .alongbtns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
   .stoprow h4 .tag { margin-left: 8px; vertical-align: middle; }
-  .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+  .cheat { margin-top: 34px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; }
   .cheat h2 { font-family: var(--display); font-size: 1.3rem; margin: 0 0 8px; }
   .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
   .fine { margin: 18px 0 0; color: var(--muted); font-size: 0.85rem; }
@@ -371,11 +372,11 @@
   .stat .l { color: var(--muted); font-size: 0.8rem; line-height: 1.3; }
   .totals .issue { color: var(--warn); font-weight: 500; font-size: 0.92rem; margin: 0 0 8px; }
   .totals .acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
-  .totals .acts .btn { flex: 1 1 140px; text-align: center; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; }
+  .totals .acts .btn { white-space: nowrap; flex: 1 1 140px; text-align: center; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; }
   .rv > h2 { margin-bottom: 2px; }
   .map-box { margin: 6px 0 10px; }
   .maptools { margin: 0 0 8px; }
-  .maploading { height: min(54vh, 460px); border-radius: 14px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 0.92rem; }
+  .maploading { height: min(54vh, 460px); border-radius: 26px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 0.92rem; }
   .spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--line); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   #routeEmpty { margin: 14px 0 0; }
@@ -384,7 +385,7 @@
   /* Tap targets: 44px minimum */
   .chip { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 15px; }
   .tab { min-height: 44px; }
-  .btn.small { min-height: 44px; padding: 8px 14px; display: inline-flex; align-items: center; }
+  .btn.small { min-height: 44px; padding: 8px 18px; display: inline-flex; align-items: center; }
   .seg button, .clearbtn, .linkbtn, .swt, .undo button { min-height: 44px; }
   .bar { padding-top: 8px; padding-bottom: 8px; }
   .sum { margin-bottom: 6px; }
@@ -494,13 +495,6 @@
           <input type="range" id="walkLimit" min="0.3" max="2" step="0.1" value="0.8">
         </div>
         <label class="check"><input type="checkbox" id="loopChk"> End back at the start</label>
-        <div class="field"><label for="destSel">End at</label><select id="destSel"></select></div>
-        <div id="alongCtl" hidden>
-          <div class="field"><span class="lbl" id="alongLbl">Stops along the way</span><div class="seg" id="alongCount" role="group" aria-labelledby="alongLbl"></div></div>
-          <div class="field"><span class="lbl" id="alongCatLbl">Include</span><div class="chips" id="alongCats" role="group" aria-labelledby="alongCatLbl"></div></div>
-          <div class="alongbtns"><button class="btn" id="alongGo" type="button">Fill my route</button><button class="btn ghost" id="alongShuffle" type="button">Try different stops</button></div>
-        </div>
-        <p class="hint" id="alongNote" role="status" style="margin: 10px 0 0;"></p>
       </details>
     </div>
   </div>
@@ -540,7 +534,7 @@
     </div>
     <div class="mapfs-ctl">
       <button type="button" id="fsIn" aria-label="Zoom in">+</button>
-      <button type="button" id="fsOut" aria-label="Zoom out">-</button>
+      <button type="button" id="fsOut" aria-label="Zoom out">−</button>
       <button type="button" id="fsNotes" aria-label="Show local notes" aria-pressed="false">Notes</button>
       <button type="button" id="fsFit" aria-label="Fit my route">Fit</button>
       <button type="button" id="fsCity" aria-label="Show the whole city">City</button>
@@ -1040,25 +1034,29 @@
     var i = state.route.indexOf(id);
     if (i >= 0) state.route.splice(i, 1); else { state.route.push(id); maybeLoadGoogle(); }
     refresh();
-    if (i < 0 && fillToFar(id)) return;
     var n = state.route.length;
     showToast((i >= 0 ? "Removed " : "Added ") + byId[id].name + (n ? " \u00b7 " + n + (n === 1 ? " stop" : " stops") : ""));
   }
-  // Picking a far-away place early on: make it the last stop and fill the way there, with Undo.
+  // Tapping a far-away place on the map offers to fill the way there with open stops.
   var FAR_MI = 1.2;   // straight-line, about a 30 minute walk
-  function fillToFar(id) {
-    var it = byId[id];
-    if (state.dest || hav(startObj(), it) < FAR_MI) return false;
-    if (state.route.filter(function (x) { return x !== id; }).length > 1) return false;
-    var snap = { route: state.route.slice(), auto: state.auto.slice() };
+  function isFar(id) { return state.dest !== id && hav(startObj(), byId[id]) >= FAR_MI; }
+  function farLabel(id) { return (hav(startObj(), byId[id]) * STREET).toFixed(1) + " mi away"; }
+  function fillTo(id) {
+    var it = byId[id], snap = { route: state.route.slice(), auto: state.auto.slice(), dest: state.dest };
+    if (state.route.indexOf(id) < 0) state.route.push(id);
     state.dest = id;
     var res = generateAlong(false);
-    if (!res.added) { state.dest = null; state.route = snap.route; state.auto = snap.auto; refresh(); return false; }
-    refresh(); renderAlongUi(res.note);
-    showUndo("Added " + it.name + " plus " + res.added + (res.added === 1 ? " stop" : " stops") + " on the way", function () {
-      state.dest = null; state.route = snap.route; state.auto = snap.auto; refresh(); renderAlongUi("");
+    fs.sheet = null;
+    if (!res.added) { state.dest = snap.dest; refresh(); showToast("Added " + it.name + ". Nothing open fits along the way."); return; }
+    refresh();
+    showUndo("Added " + res.added + (res.added === 1 ? " stop" : " stops") + " on the way to " + it.name, function () {
+      state.route = snap.route; state.auto = snap.auto; state.dest = snap.dest; refresh();
     }, "Undo", 8000);
-    return true;
+  }
+  function mapAdd(id) {
+    if (!isFar(id)) { toggle(id); return; }
+    state.route.push(id); maybeLoadGoogle(); refresh();
+    showUndo(byId[id].name + " is " + farLabel(id) + ". Add stops on the way?", function () { fillTo(id); }, "Fill the way", 9000);
   }
   function setView(v) {
     state.view = v;
@@ -1090,7 +1088,7 @@
     if (fs.open) { if (gm.ready) fsSheetRender(sim); else fsRender(); }
     persist();
     renderHeatUi();
-    renderAlongUi();
+   
   }
 
 
@@ -1279,8 +1277,7 @@
     var host = document.createElement("div"); host.id = "gmap"; gm.host = host;
     var box = document.getElementById("mapBox"); box.innerHTML = ""; box.appendChild(host);
     gm.map = new google.maps.Map(host, {
-      center: { lat: 37.7749, lng: -122.4194 }, zoom: 13, disableDefaultUI: true, zoomControl: true,
-      zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+      center: { lat: 37.7749, lng: -122.4194 }, zoom: 13, disableDefaultUI: true, zoomControl: false,
       gestureHandling: "cooperative", clickableIcons: false, styles: gmStyles(), backgroundColor: isDark() ? "#121A29" : "#CFDCEC"
     });
     return gm.map;
@@ -1376,7 +1373,7 @@
       fs.sheet = kind === "start" ? { type: "start" } : { type: kind === "go" ? "stop" : "add", id: id };
       refresh(); return;
     }
-    if (kind === "add") toggle(id);
+    if (kind === "add") mapAdd(id);
     else if (kind === "go") scrollToRow(id);
     else showToast("Start: " + startObj().label);
   }
@@ -1433,6 +1430,7 @@
   function hideUndo() { document.getElementById("undo").classList.remove("show"); undoFn = null; }
   function showUndo(msg, fn, label, ms) {
     var u = document.getElementById("undo"); undoFn = fn;
+    clearTimeout(toastT); document.getElementById("toast").classList.remove("show");
     document.getElementById("undoText").textContent = msg;
     document.getElementById("undoBtn").textContent = label || "Undo";
     requestAnimationFrame(function () { u.classList.add("show"); });
@@ -1844,52 +1842,6 @@
     if (isClosed(D)) note += " " + D.name + " is closed that day, so pick another day or another last stop.";
     return { added: chosen.length, note: note };
   }
-  function setDest(id, thenFill) {
-    state.dest = id || null;
-    if (!id) { state.auto = []; refresh(); renderAlongUi("Last stop cleared. Your stops stay where they are."); return; }
-    if (state.route.indexOf(id) < 0) state.route.push(id);
-    var res = thenFill === false ? { note: "" } : generateAlong(false);
-    refresh(); renderAlongUi(res.note);
-  }
-  function renderAlongUi(note) {
-    var sel = document.getElementById("destSel"); if (!sel) return;
-    sel.value = state.dest || "";
-    document.getElementById("alongCtl").hidden = !state.dest;
-    Array.prototype.forEach.call(document.getElementById("alongCount").children, function (b) { b.setAttribute("aria-pressed", parseInt(b.getAttribute("data-n"), 10) === state.fill.count ? "true" : "false"); });
-    var none = !Object.keys(state.fill.cats).some(function (k) { return state.fill.cats[k]; });
-    Array.prototype.forEach.call(document.getElementById("alongCats").children, function (b) {
-      var c = b.getAttribute("data-cat"); b.setAttribute("aria-pressed", c === "all" ? (none ? "true" : "false") : (state.fill.cats[c] ? "true" : "false"));
-    });
-    if (typeof note === "string") document.getElementById("alongNote").textContent = note;
-  }
-  function setupAlong() {
-    var sel = document.getElementById("destSel");
-    var none = el("option", "", "Wherever the route ends"); none.value = ""; sel.appendChild(none);
-    CATS.forEach(function (c) {
-      var g = el("optgroup"); g.label = c.label;
-      ITEMS.filter(function (i) { return i.cat === c.id; }).sort(function (a, b) { return a.name < b.name ? -1 : 1; }).forEach(function (i) { var o = el("option", "", i.name); o.value = i.id; g.appendChild(o); });
-      sel.appendChild(g);
-    });
-    sel.addEventListener("change", function () { setDest(sel.value); });
-    var cnt = document.getElementById("alongCount");
-    [1, 2, 3, 4, 5].forEach(function (n) {
-      var b = el("button", "", String(n)); b.type = "button"; b.setAttribute("data-n", String(n));
-      b.addEventListener("click", function () { state.fill.count = n; renderAlongUi(); });
-      cnt.appendChild(b);
-    });
-    var cc = document.getElementById("alongCats");
-    [{ id: "all", label: "Anything" }].concat(CATS).forEach(function (c) {
-      var b = el("button", "chip", c.label); b.type = "button"; b.setAttribute("data-cat", c.id);
-      b.addEventListener("click", function () {
-        if (c.id === "all") state.fill.cats = {}; else state.fill.cats[c.id] = !state.fill.cats[c.id];
-        renderAlongUi();
-      });
-      cc.appendChild(b);
-    });
-    document.getElementById("alongGo").addEventListener("click", function () { var r = generateAlong(false); refresh(); renderAlongUi(r.note); });
-    document.getElementById("alongShuffle").addEventListener("click", function () { var r = generateAlong(true); refresh(); renderAlongUi(r.note); });
-    renderAlongUi("");
-  }
 
   /* ---------- map ---------- */
   var COAST = [[-122.4770,37.8106],[-122.4660,37.8085],[-122.4470,37.8085],[-122.4310,37.8065],[-122.4230,37.8075],[-122.4170,37.8100],[-122.4110,37.8112],[-122.4055,37.8090],[-122.4000,37.8060],[-122.3950,37.7990],[-122.3925,37.7955],[-122.3880,37.7890],[-122.3890,37.7800],[-122.3850,37.7700],[-122.3820,37.7580],[-122.3790,37.7480],[-122.3740,37.7380],[-122.3670,37.7330],[-122.3720,37.7230],[-122.3800,37.7140],[-122.3850,37.7080],[-122.5055,37.7080],[-122.5090,37.7300],[-122.5120,37.7600],[-122.5130,37.7750],[-122.5140,37.7800],[-122.5110,37.7830],[-122.5060,37.7860],[-122.4960,37.7870],[-122.4880,37.7900],[-122.4830,37.7930],[-122.4800,37.7990],[-122.4780,37.8070]];
@@ -1973,7 +1925,7 @@
     var box = document.getElementById("mapBox");
     var vb = fitVb(items, 1, state.zoom === "city");
     box.innerHTML = svgString(sim, items, vb, box.clientWidth || 360);
-    Array.prototype.forEach.call(box.querySelectorAll("[data-add]"), function (g) { g.addEventListener("click", function () { toggle(g.getAttribute("data-add")); }); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-add]"), function (g) { g.addEventListener("click", function () { mapAdd(g.getAttribute("data-add")); }); });
     Array.prototype.forEach.call(box.querySelectorAll("[data-note]"), function (g) { g.addEventListener("click", function () { openNoteCard(g.getAttribute("data-note")); }); });
     Array.prototype.forEach.call(box.querySelectorAll("[data-go]"), function (g) {
       bindHold(g, g.getAttribute("data-go"), function () {
@@ -2050,7 +2002,11 @@
         fsSheet.appendChild(el("p", "muted", it.where));
         fsSheet.appendChild(el("p", "", it.entryLabel));
         fsSheet.appendChild(el("p", isClosed(it) ? "issue" : "muted", statusText(it, state.cfg.day)));
-        btn("Add to route", "", function () { fs.sheet = { type: "stop", id: sh.id }; toggle(sh.id); });
+        if (isFar(sh.id)) {
+          fsSheet.appendChild(el("p", "muted", farLabel(sh.id) + " from your start."));
+          btn("Fill the way there", "", function () { fillTo(sh.id); });
+          btn("Just add", "ghost", function () { fs.sheet = { type: "stop", id: sh.id }; toggle(sh.id); });
+        } else btn("Add to route", "", function () { fs.sheet = { type: "stop", id: sh.id }; toggle(sh.id); });
       }
     }
     btn("Close", "ghost", function () { fs.sheet = null; fsRender(); });
@@ -2069,13 +2025,13 @@
 
   function fsOpen() {
     fs.open = true; fs.vb = null; fs.sheet = null; fs.ptrs = {}; fs.g = null;
-    fsEl.hidden = false; document.body.style.overflow = "hidden";
+    fsEl.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("fs-open");
     if (gm.ready && gm.map) { fsEl.classList.add("google"); gmMoveTo(document.getElementById("fsGoogle"), true); fsSheetRender(simulate(fsItems(), cfgObj())); }
     else { fsEl.classList.remove("google"); fsRender(); }
     var d = document.getElementById("fsDone"); if (d.focus) d.focus();
   }
   function fsClose() {
-    fs.open = false; fsEl.hidden = true; document.body.style.overflow = "";
+    fs.open = false; fsEl.hidden = true; document.body.style.overflow = ""; document.body.classList.remove("fs-open");
     if (gm.ready && gm.map) gmMoveTo(document.getElementById("mapBox"), false);
   }
 
@@ -2145,8 +2101,8 @@
     fsMap.addEventListener("dblclick", function (e) {
       var r = fsRect(); fsZoomAt(0.5, e.clientX - r.left, e.clientY - r.top); fsRender();
     });
-    document.getElementById("fsIn").addEventListener("click", function () { var r = fsRect(); fsZoomAt(0.6, r.width / 2, r.height / 2); fsRender(); });
-    document.getElementById("fsOut").addEventListener("click", function () { var r = fsRect(); fsZoomAt(1.6, r.width / 2, r.height / 2); fsRender(); });
+    document.getElementById("fsIn").addEventListener("click", function () { if (gm.ready && gm.map) { gm.map.setZoom(gm.map.getZoom() + 1); return; } var r = fsRect(); fsZoomAt(0.6, r.width / 2, r.height / 2); fsRender(); });
+    document.getElementById("fsOut").addEventListener("click", function () { if (gm.ready && gm.map) { gm.map.setZoom(gm.map.getZoom() - 1); return; } var r = fsRect(); fsZoomAt(1.6, r.width / 2, r.height / 2); fsRender(); });
     document.getElementById("fsFit").addEventListener("click", function () { if (gm.ready) gmFit(false); else fsFitTo(false); });
     document.getElementById("fsCity").addEventListener("click", function () { if (gm.ready) gmFit(true); else fsFitTo(true); });
     document.getElementById("fsDone").addEventListener("click", fsClose);
@@ -2295,7 +2251,7 @@
     var url = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(startObj().q) + "&destination=" + encodeURIComponent(dest) + (wp.length ? "&waypoints=" + encodeURIComponent(wp.join("|")) : "") + "&travelmode=" + (anyMuni ? "transit" : "walking");
     var shBtn = el("button", "btn", "Share route"); shBtn.type = "button";
     shBtn.addEventListener("click", function () { sharePlan(items, sim, url); });
-    var a = el("a", "btn ghost", "Open in Google Maps"); a.href = url; a.target = "_blank"; a.rel = "noopener";
+    var a = el("a", "btn ghost", "Google Maps"); a.setAttribute("aria-label", "Open this route in Google Maps"); a.href = url; a.target = "_blank"; a.rel = "noopener";
     var wrap = el("div", "acts"); wrap.appendChild(shBtn); wrap.appendChild(a); tot.appendChild(wrap);
     tot.appendChild(el("p", "fine", (gm.ready ? "Leg times from Google. " : "Times are estimates: walking 3 mph, Muni with an 8 minute wait. ") + "Muni is " + money(FARE) + " per 90 minutes. Visit lengths are typical, not fixed." + (tooMany ? " Google Maps takes at most 9 waypoints, so its link stops early." : "")));
   }
@@ -2525,7 +2481,7 @@
   var fromLink = restore();
   renderNotes();
   fsEl.hidden = true; document.body.style.overflow = "";
-  buildChips(); buildMapChips(); buildStops(); document.getElementById("afterList").hidden = false; setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd(); setupAlong();
+  buildChips(); buildMapChips(); buildStops(); document.getElementById("afterList").hidden = false; setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd();
   buildDayChips("dayChips2"); buildDaySel(); syncSettingsUI();
   document.getElementById("stopCount").textContent = ITEMS.length;
   updateKeyBanner();
@@ -2538,7 +2494,7 @@
     navigator.permissions.query({ name: "geolocation" }).then(function (r) { if (r.state === "granted") locateMe(); }, function () {});
   }
 
-  window.__sfTest = { generateAlong: generateAlong, setDest: setDest, locState: function () { return locState; }, myLoc: function () { return myLoc; }, NOTES: NOTES, heatLevelAt: heatLevelAt, legHeatLevel: legHeatLevel, heat: heat, gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
+  window.__sfTest = { generateAlong: generateAlong, fillTo: function (id) { fillTo(id); }, mapAdd: function (id) { mapAdd(id); }, locState: function () { return locState; }, myLoc: function () { return myLoc; }, NOTES: NOTES, heatLevelAt: heatLevelAt, legHeatLevel: legHeatLevel, heat: heat, gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
 })();
 </script>
 </body>
