@@ -11,24 +11,39 @@
   2. Enable "Maps JavaScript API" and "Routes API".
   3. Create an API key and restrict it: Application restrictions -> Websites (add your site, for example https://yourname.github.io/*), and API restrictions -> Maps JavaScript API + Routes API.
   4. Put the key in a file named config.js next to this page, containing exactly:   window.SF_GUIDE_KEY = "YOUR_KEY";
-     (or paste it into the box on the Map and route tab, which saves it on that device only).
+     (or open the page with ?setup=1 and paste it into the key box, which saves it on that device only).
   A website-restricted key is meant to be public. With no key, the page still works and shows a built-in schematic map.
 -->
-<title>SF day guide: records, beer, house music</title>
-<meta name="description" content="A San Francisco day planner for record shops, breweries, house music and art. Pick stops, compare routes and see hours.">
+<title>SF Day Guide: plan a day in San Francisco</title>
+<meta name="description" content="Pick a few stops in San Francisco, from record shops and bars to museums and work spots. Get the route, the total time and the cost, checked against opening hours.">
+<link rel="canonical" href="https://jbohmer12.github.io/sf-guide/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="SF day guide: records, beer, house music">
-<meta property="og:description" content="Pick stops, compare route orders and see real opening hours across San Francisco.">
+<meta property="og:site_name" content="SF Day Guide">
+<meta property="og:url" content="https://jbohmer12.github.io/sf-guide/">
+<meta property="og:title" content="SF Day Guide: plan a day in San Francisco">
+<meta property="og:description" content="Pick a few stops. Get the route, the time and the cost.">
+<meta property="og:image" content="https://jbohmer12.github.io/sf-guide/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SF Day Guide: a numbered walking route on a city grid">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SF Day Guide: plan a day in San Francisco">
+<meta name="twitter:description" content="Pick a few stops. Get the route, the time and the cost.">
+<meta name="twitter:image" content="https://jbohmer12.github.io/sf-guide/assets/og.jpg">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#E8ECF1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1117" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SF day guide">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-title" content="SF Day">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap"></noscript>
 <style>
   :root {
     --bg: #E8ECF1;
@@ -67,22 +82,27 @@
   body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
   .wrap { max-width: 640px; margin: 0 auto; padding: 0 18px 48px; }
 
-  .hero { padding: 28px 0 8px; }
-  .hero h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.3rem, 9vw, 3.4rem); line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 12px; }
-  .hero p { margin: 0; color: var(--muted); max-width: 46ch; }
-  .record-wrap { display: flex; justify-content: center; padding: 26px 0 10px; }
-  .record {
-    position: relative; width: 224px; height: 224px; border-radius: 50%;
-    background:
-      conic-gradient(from 30deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 18%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 68%, rgba(255,255,255,0.10)),
-      repeating-radial-gradient(circle at center, #0A0C11 0 2px, #171B25 2px 4px);
-    box-shadow: 0 0 0 1px var(--line); display: grid; place-items: center;
+  .hero { padding: 22px 0 6px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 0.95rem; letter-spacing: 0.01em; margin: 0 0 18px; }
+  .brand .mark { width: 24px; height: 24px; flex: 0 0 auto; display: block; }
+  .hero h1 { text-wrap: balance; font-family: var(--display); font-weight: 800; font-size: clamp(2rem, 8.4vw, 3rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 0 10px; }
+  .hero p.lede { margin: 0; color: var(--muted); max-width: 40ch; font-size: 1.02rem; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+  .facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 18px 0 0; padding: 0; color: var(--muted); font-size: 0.88rem; }
+  .facts li { display: block; white-space: nowrap; }
+  .facts li::before { content: ""; display: inline-block; vertical-align: middle; width: 6px; height: 6px; margin: -2px 8px 0 0; border-radius: 50%; background: var(--accent); }
+  .barrow { display: flex; gap: 8px; align-items: stretch; margin-bottom: 8px; }
+  .barrow .tabs { flex: 1; margin: 0; min-width: 0; }
+  .daysel { flex: 0 0 auto; font: inherit; font-size: 0.93rem; font-weight: 600; color: var(--ink); background-color: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0 30px 0 14px; min-height: 44px; -webkit-appearance: none; appearance: none; cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+  .rvhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .rvhead h2 { margin: 0; }
+  @media (min-width: 768px) {
+    .hero { padding: 64px 0 28px; }
+    .hero h1 { font-size: 3.6rem; }
+    .hero p.lede { font-size: 1.15rem; }
   }
-  .record .label { position: relative; width: 104px; height: 104px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 0 3px rgba(0,0,0,0.25); }
-  .record .label::after { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #0A0C11; }
-  .label .amt { font-family: var(--display); font-weight: 800; font-size: 1.9rem; line-height: 1; letter-spacing: -0.02em; margin-bottom: 18px; }
-  .label .sub { position: absolute; bottom: 24px; font-size: 0.68rem; font-weight: 500; line-height: 1.15; opacity: 0.9; }
-
+  .cta .btn { min-height: 48px; padding: 12px 20px; font-size: 1rem; display: inline-flex; align-items: center; }
   .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 18px; border-bottom: 1px solid var(--line); margin: 0 -18px; }
   .sum { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 0.95rem; }
   .sum strong { font-weight: 600; }
@@ -134,7 +154,7 @@
   .stmkt { stroke: var(--street); fill: none; stroke-linecap: round; }
   .nb { fill: var(--muted); opacity: 0.8; font-family: var(--body); }
   .pin-n { fill: var(--accent-ink); font-family: var(--display); font-weight: 800; text-anchor: middle; }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
+  .legend { margin-top: 0 !important; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--accent); }
   .sw.dash { border-top: 3px dashed var(--ink); }
@@ -228,7 +248,7 @@
   .footer a { color: var(--ink); }
 
   /* Google map */
-  #gmap { width: 100%; height: min(62vh, 480px); border-radius: 14px; border: 1px solid var(--line); background: var(--water); overflow: hidden; }
+  #gmap { width: 100%; height: min(54vh, 460px); border-radius: 14px; border: 1px solid var(--line); background: var(--water); overflow: hidden; }
   #fsGoogle { position: absolute; inset: 0; }
   #fsGoogle #gmap { height: 100%; border-radius: 0; border: 0; }
   .mapfs.google #fsMap, .mapfs.google #fsIn, .mapfs.google #fsOut { display: none; }
@@ -342,27 +362,57 @@
   .cheat ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.95rem; }
   .fine { margin: 18px 0 0; color: var(--muted); font-size: 0.85rem; }
 
+  /* Route summary */
+  .totals { margin: 10px 0 16px; padding: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .stat .v { font-family: var(--display); font-weight: 800; font-size: 1.45rem; line-height: 1.1; letter-spacing: -0.01em; white-space: nowrap; }
+  .stat .l { color: var(--muted); font-size: 0.8rem; line-height: 1.3; }
+  .totals .issue { color: var(--warn); font-weight: 500; font-size: 0.92rem; margin: 0 0 8px; }
+  .totals .acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+  .totals .acts .btn { flex: 1 1 140px; text-align: center; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; }
+  .rv > h2 { margin-bottom: 2px; }
+  .map-box { margin: 6px 0 10px; }
+  .maptools { margin: 0 0 8px; }
+  .maploading { height: min(54vh, 460px); border-radius: 14px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 0.92rem; }
+  .spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--line); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #routeEmpty { margin: 14px 0 0; }
+  details.set { margin-top: 22px; }
+
+  /* Tap targets: 44px minimum */
+  .chip { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 15px; }
+  .tab { min-height: 44px; }
+  .btn.small { min-height: 44px; padding: 8px 14px; display: inline-flex; align-items: center; }
+  .seg button, .clearbtn, .linkbtn, .swt, .undo button { min-height: 44px; }
+  .bar { padding-top: 8px; padding-bottom: 8px; }
+  .sum { margin-bottom: 6px; }
+  .daybar { margin-top: 16px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
   button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="hero">
-    <h1>Your San Francisco day</h1>
-    <p>Record shops, breweries, house music and art within reach of Civic Center. Add the stops you want, then open Map and route to compare the order that works best.</p>
-    <div class="daybar"><span class="lbl" id="dayLbl">Plan for</span><div class="chips" id="dayChips" role="group" aria-labelledby="dayLbl"></div></div>
-    <div class="record-wrap">
-      <div class="record" role="img" aria-label="A vinyl record whose label shows your running cost estimate">
-        <div class="label"><span class="amt" id="recAmt">$0</span><span class="sub">est. day</span></div>
-      </div>
-    </div>
+    <p class="brand"><img class="mark" src="assets/icon.svg" alt="" width="24" height="24">SF Day Guide</p>
+    <h1>Plan a day in San Francisco</h1>
+    <p class="lede">Pick a few stops. Get the best order, the total time and the cost.</p>
+    <div class="cta"><button class="btn" type="button" id="sampleBtn">Try a sample route</button><button class="btn ghost" type="button" id="browseBtn">Browse stops</button></div>
+    <ul class="facts" aria-label="About this guide"><li><span id="stopCount">80+</span>&nbsp;stops</li><li>Hours checked</li><li>Walk + Muni</li></ul>
   </header>
 
   <div class="bar">
-    <div class="sum"><span id="sumText"><strong>Nothing added yet</strong></span><button class="clearbtn" id="clear" type="button" aria-label="Clear all stops">Clear all</button></div>
-    <div class="tabs" role="group" aria-label="View">
-      <button class="tab" id="tabStops" type="button" aria-pressed="true">Pick stops</button>
-      <button class="tab" id="tabRoute" type="button" aria-pressed="false">Map and route</button>
+    <div class="barrow">
+      <div class="tabs" role="group" aria-label="View">
+        <button class="tab" id="tabStops" type="button" aria-pressed="true">Pick stops</button>
+        <button class="tab" id="tabRoute" type="button" aria-pressed="false">Route</button>
+      </div>
+      <select class="daysel" id="daySel" aria-label="Day to plan for"></select>
     </div>
     <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
   </div>
@@ -370,29 +420,32 @@
   <main id="main"></main>
 
   <div class="rv" id="routeView" hidden>
-    <h2>Map and route</h2>
+    <div class="rvhead"><h2>Your route</h2><button class="clearbtn" id="clear" type="button" aria-label="Clear all stops" hidden>Clear all</button></div>
     <p class="hint" id="hoursHint">Hours shown for today.</p>
     <div id="routeBody" hidden>
+      <div class="map-box" id="mapBox"></div>
+      <p class="hint" id="mapNote" role="status" hidden></p>
+      <div class="legend">
+        <span><i class="sw"></i>Walk</span>
+        <span><i class="sw dash"></i>Muni</span>
+        <span><i class="sw warn"></i>Timing problem</span>
+        <span><i class="sw dot"></i>Tap a dot to add it</span>
+      </div>
+      <div class="totals" id="totals" aria-live="polite" hidden></div>
       <div class="maptools">
-        <button class="btn small" type="button" id="expandMap">Expand map</button>
-        <button class="btn ghost small" type="button" id="zoomFit">Fit my route</button>
+        <button class="btn small" type="button" id="expandMap">Full screen</button>
+        <button class="btn ghost small" type="button" id="zoomFit">Fit route</button>
         <button class="btn ghost small" type="button" id="zoomCity">Whole city</button>
         <button class="btn ghost small hbtn" type="button" id="notesBtn" aria-pressed="false">Local notes</button>
         <button class="btn ghost small" type="button" id="gmTap" hidden>Use Google map</button>
         <label class="swt" title="SFPD theft, robbery and assault reports. Busy areas show more reports, so this reflects crowds as well as risk."><input type="checkbox" id="heatSwitch" role="switch" aria-label="Show crime reports on the map"><span class="swtrack" aria-hidden="true"></span><span class="swtxt">Reports</span><span class="swst" id="heatStatus" role="status"></span></label>
       </div>
-      <p class="hint" style="margin: 0 0 6px;">Places shown on the map</p>
       <div class="chips" id="mapChips" role="group" aria-label="Show places on the map by category"></div>
-      <div class="map-box" id="mapBox"></div>
-      <div class="legend">
-        <span><i class="sw"></i>Walk</span>
-        <span><i class="sw dash"></i>Muni</span>
-        <span><i class="sw warn"></i>Timing problem</span>
-        <span><i class="sw dot"></i>Tap a gray dot to add it</span>
-      </div>
 
-      <p class="hint" id="mapTips" style="margin: 10px 0 0;">Tap Expand map to pan and zoom. Press and hold a numbered pin: let go to remove it, or drag it onto a dot or another stop to swap. On the built-in map, pins are approximate and lines are straight.</p>
-      <p class="hint" id="routeEmpty" style="margin: 8px 0 0;">No stops yet. Tap a gray dot to add one, or <button type="button" class="linkbtn" id="goStops" style="padding: 0;">browse the list</button>.</p>
+      <div class="empty" id="routeEmpty">
+        <p><strong>No stops yet.</strong> Tap a dot on the map, browse the list, or start from a sample.</p>
+        <div class="cta" style="justify-content:center;margin:0"><button type="button" class="btn" id="goSample">Try a sample route</button><button type="button" class="btn ghost" id="goStops">Browse stops</button></div>
+      </div>
 
       <div class="keybox" id="keyBox" hidden>
         <strong>Google map is off</strong>
@@ -401,15 +454,14 @@
         <p class="err" id="keyMsg" hidden></p>
       </div>
 
-    <div class="alongbox" id="alongBox">
-      <div class="field"><label for="destSel">Last stop</label><select id="destSel"></select></div>
-      <div id="alongCtl" hidden>
-        <div class="field"><span class="lbl" id="alongLbl">Stops along the way</span><div class="seg" id="alongCount" role="group" aria-labelledby="alongLbl"></div></div>
-        <div class="field"><span class="lbl" id="alongCatLbl">Include</span><div class="chips" id="alongCats" role="group" aria-labelledby="alongCatLbl"></div></div>
-        <div class="alongbtns"><button class="btn" id="alongGo" type="button">Fill my route</button><button class="btn ghost" id="alongShuffle" type="button">Try different stops</button></div>
-        <p class="hint" id="alongNote" role="status" style="margin: 10px 0 0;"></p>
+      <div id="routeOnly">
+        <h3>Stops in order</h3>
+        <p class="hint">Press and hold a stop, then drag it to reorder. On the map, hold a pin to remove or swap it.</p>
+        <ol class="tl" id="timeline"></ol>
+        <h3>Compare orders</h3>
+        <p class="hint">Fastest and cheapest orders are worked out for you. Closed stops and missed opening hours count against an order.</p>
+        <div class="cmp" id="cmp"></div>
       </div>
-    </div>
 
       <div class="notebox" id="notesBox" hidden>
         <h3>Local notes</h3>
@@ -417,7 +469,7 @@
         <div id="notesList"></div>
       </div>
 
-      <details class="set" open>
+      <details class="set">
         <summary>Route settings</summary>
         <div class="field"><span class="lbl" id="dayLbl2">Day</span><div class="chips" id="dayChips2" role="group" aria-labelledby="dayLbl2"></div></div>
         <div class="field">
@@ -441,21 +493,18 @@
           <input type="range" id="walkLimit" min="0.3" max="2" step="0.1" value="0.8">
         </div>
         <label class="check"><input type="checkbox" id="loopChk"> End back at the start</label>
+        <div class="field"><label for="destSel">End at</label><select id="destSel"></select></div>
+        <div id="alongCtl" hidden>
+          <div class="field"><span class="lbl" id="alongLbl">Stops along the way</span><div class="seg" id="alongCount" role="group" aria-labelledby="alongLbl"></div></div>
+          <div class="field"><span class="lbl" id="alongCatLbl">Include</span><div class="chips" id="alongCats" role="group" aria-labelledby="alongCatLbl"></div></div>
+          <div class="alongbtns"><button class="btn" id="alongGo" type="button">Fill my route</button><button class="btn ghost" id="alongShuffle" type="button">Try different stops</button></div>
+        </div>
+        <p class="hint" id="alongNote" role="status" style="margin: 10px 0 0;"></p>
       </details>
-
-      <div id="routeOnly">
-      <h3>Compare orders</h3>
-      <p class="hint">Fastest and cheapest are searched for you. Closed stops and missed opening hours count against an order.</p>
-      <div class="cmp" id="cmp"></div>
-
-      <h3>Your route</h3>
-      <p class="hint">Press and hold a stop, then drag it up or down to reorder.</p>
-      <ol class="tl" id="timeline"></ol>
-      <div class="totals" id="totals"></div>
-      </div>
     </div>
   </div>
 
+  <div id="afterList" hidden>
   <aside class="cheat" aria-labelledby="cheat-h">
     <h2 id="cheat-h">Getting around and paying</h2>
     <ul>
@@ -469,6 +518,7 @@
   </aside>
   <footer class="footer"><span id="credit"></span><span><a href="#" id="resetKey" hidden>Remove saved Google key</a></span></footer>
   <p class="fine" id="disclaimer">An unofficial planning aid, not affiliated with any place listed. Hours, prices, ratings and local notes can be wrong or out of date, so confirm before you go. Everything runs in your browser. Your location and picks stay on your device and are not sent to us. The page loads Google Fonts, SF open data if you turn Reports on, and Google Maps if it is switched on.</p>
+  </div>
 </div>
 
 
@@ -501,19 +551,19 @@
 <script src="config.js"></script>
 <script>
 (function () {
-  function showErr(m) {
+  function showErr() {
     var b = document.getElementById("errBar"), t = document.getElementById("errMsg");
     if (!b || !t) return;
-    t.textContent = "Something went wrong: " + m; b.hidden = false;
+    t.textContent = "Something on this page didn't load right. Reloading usually fixes it."; b.hidden = false;
   }
   window.addEventListener("error", function (e) {
-    var m = (e && e.message) || "";
-    if (/ResizeObserver/.test(m)) return;
-    showErr(m || "an unknown error");
+    var m = (e && e.message) || "", f = (e && e.filename) || "";
+    if (!m || /ResizeObserver|^Script error/.test(m)) return;
+    if (f && f.indexOf(location.origin) !== 0) return;   // ignore errors inside Google's scripts
+    if (e && e.target && e.target !== window) return;     // a failed image or script tag, handled where it loads
+    showErr();
   });
-  window.addEventListener("unhandledrejection", function (e) {
-    var r = e && e.reason; showErr(String((r && r.message) || r || "an unknown error"));
-  });
+  window.addEventListener("unhandledrejection", function () { /* network promises are handled where they are made */ });
   document.addEventListener("DOMContentLoaded", function () {
     var rb = document.getElementById("errReload"); if (rb) rb.addEventListener("click", function () { location.reload(); });
   });
@@ -541,7 +591,7 @@
 </script>
 <script>
 (function () {
-  var SAFE = /[?&]safe=1/.test(location.search);
+  var SAFE = /[?&]safe=1/.test(location.search), SETUP = /[?&]setup=1/.test(location.search);
   var CONFIG = {
     googleMapsApiKey: (typeof window.SF_GUIDE_KEY === "string" ? window.SF_GUIDE_KEY : ""),   // set in config.js, or use the box on the Map and route tab
     credit: { text: "Designed and built by Joaquin", url: "https://joaquinboehmer.framer.website" }
@@ -594,9 +644,9 @@
     { id: "public-works", cat: "music", name: "Public Works", where: "Erie St, Mission", blurb: "A two-floor electronic music club known for its sound system.", entry: null, entryLabel: "Cover varies. Check the lineup", transitLabel: "15 min walk", lat: 37.76892, lng: -122.41942, dwell: 90, q: "Public Works, 161 Erie St, San Francisco, CA", hrs: null, noHours: "Hours not listed. Check the lineup" },
     { id: "f8", cat: "music", name: "F8", where: "Folsom St, SoMa", blurb: "Underground house and techno. A review mentions a Wednesday house night, so verify.", entry: null, entryLabel: "Cover varies", transitLabel: "10 min walk", lat: 37.77527, lng: -122.41004, dwell: 90, q: "F8 Nightclub, 1192 Folsom St, San Francisco, CA", hrs: [N,[21,26],[21,26],[21,26],[21,26],[21,26],[22,26]] },
     { id: "underground", cat: "music", name: "Underground SF", where: "Haight St", blurb: "A coffee shop by day with DJ nights Thursday to Saturday.", entry: null, entryLabel: "Coffee about $5. DJ nights: check cover", transitLabel: "Muni $2.75 each way", lat: 37.77247, lng: -122.42939, dwell: 30, q: "Underground SF, 424 Haight St, San Francisco, CA", hrs: [[7,13],[7,13],[7,13],[7,13],[7,13],[10,15],N], note: "DJ nights Thu-Sat from 9pm" },
-    { id: "asian-art", cat: "art", name: "Asian Art Museum", where: "Larkin St, Civic Center", blurb: "You are next door. About 18,000 objects.", entry: 20, entryLabel: "About $20 adult (2025 price). Free first Sunday", transitLabel: "Next door", lat: 37.78018, lng: -122.41609, dwell: 90, q: "Asian Art Museum, San Francisco, CA", hrs: R([10,17]), assumed: true },
+    { id: "asian-art", cat: "art", name: "Asian Art Museum", where: "Larkin St, Civic Center", blurb: "Next to the Main Library at Civic Center. About 18,000 objects.", entry: 20, entryLabel: "About $20 adult (2025 price). Free first Sunday", transitLabel: "Next door", lat: 37.78018, lng: -122.41609, dwell: 90, q: "Asian Art Museum, San Francisco, CA", hrs: null, noHours: "Hours not confirmed. Check before you go" },
     { id: "sfmoma", cat: "art", name: "SFMOMA", where: "3rd St, SoMa", blurb: "Modern and contemporary art across seven floors.", entry: 30, entryLabel: "$30 ages 25-64. $23 ages 19-24", transitLabel: "Muni $2.75 each way, or a 25 min walk", lat: 37.7859, lng: -122.4008, dwell: 90, q: "SFMOMA, 151 3rd St, San Francisco, CA", hrs: [[10,17],[10,17],N,[12,20],[10,17],[10,17],[10,17]] },
-    { id: "deyoung", cat: "art", name: "de Young Museum", where: "Golden Gate Park", blurb: "Textiles, American and contemporary art. The Hamon Tower view is free.", entry: 20, entryLabel: "About $20. May be free tomorrow (first Tuesday), so verify", transitLabel: "Muni $2.75 each way", lat: 37.77147, lng: -122.46868, dwell: 90, q: "de Young Museum, 50 Hagiwara Tea Garden Dr, San Francisco, CA", hrs: [N,[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25]] },
+    { id: "deyoung", cat: "art", name: "de Young Museum", where: "Golden Gate Park", blurb: "Textiles, American and contemporary art. The Hamon Tower view is free.", entry: 20, entryLabel: "About $20. Free first Tuesdays (verify)", transitLabel: "Muni $2.75 each way", lat: 37.77147, lng: -122.46868, dwell: 90, q: "de Young Museum, 50 Hagiwara Tea Garden Dr, San Francisco, CA", hrs: [N,[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25]] },
     { id: "legion", cat: "art", name: "Legion of Honor", where: "Lincoln Park", blurb: "European art with bay views. Same-day entry comes with your de Young ticket.", entry: 0, entryLabel: "Included with de Young ticket", transitLabel: "Muni $2.75 each way", lat: 37.78447, lng: -122.50084, dwell: 75, q: "Legion of Honor, 100 34th Ave, San Francisco, CA", hrs: [N,[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25],[9.5,17.25]] },
     { id: "craft-design", cat: "art", name: "Museum of Craft and Design", where: "Third St, Dogpatch", blurb: "A small, design-focused museum.", entry: 10, entryLabel: "$10 ($8 student, per a reviewer). Free first Thursdays", transitLabel: "Muni $2.75 each way", lat: 37.75684, lng: -122.38779, dwell: 45, q: "Museum of Craft and Design, 2569 3rd St, San Francisco, CA", hrs: [N,N,N,[12,17],[12,17],[12,17],[12,17]] },
     { id: "clarion", cat: "art", name: "Clarion Alley murals", where: "Mission", blurb: "An open-air mural alley. Pairs well with Stranded Records.", entry: 0, entryLabel: "Free", transitLabel: "Muni $2.75 each way", lat: 37.76310, lng: -122.41965, dwell: 20, q: "Clarion Alley, San Francisco, CA", hrs: R(ALL) },
@@ -610,7 +660,7 @@
     { id: "ggp", cat: "sights", name: "Golden Gate Park", where: "Richmond and Sunset", blurb: "Conservatory of Flowers, Japanese Tea Garden and miles of paths.", entry: 0, entryLabel: "Free to enter. Some gardens charge", transitLabel: "Muni $2.75 each way", lat: 37.7726, lng: -122.4602, dwell: 60, q: "Conservatory of Flowers, San Francisco, CA", hrs: R(ALL) },
     { id: "dolores", cat: "sights", name: "Dolores Park", where: "Mission", blurb: "Grab a drink and people-watch.", entry: 0, entryLabel: "Free", transitLabel: "Muni $2.75 each way", lat: 37.76020, lng: -122.42680, dwell: 30, q: "Mission Dolores Park, San Francisco, CA", hrs: R([6,22]) },
     { id: "ferry-building", cat: "sights", name: "Ferry Building and the Embarcadero", where: "Embarcadero", blurb: "A waterfront walk with food stalls.", entry: 0, entryLabel: "Free", transitLabel: "Muni or BART, about $3 each way", lat: 37.79544, lng: -122.39361, dwell: 45, q: "Ferry Building, San Francisco, CA", hrs: R([6,22]) },
-    { id: "alcatraz", cat: "sights", name: "Alcatraz Day Tour", where: "Pier 33", blurb: "Ferry, island admission and the cellhouse audio guide.", entry: 47.95, entryLabel: "$47.95 adult. Night Tour $59.65", transitLabel: "Muni F line, or a walk along the waterfront", lat: 37.8087, lng: -122.4101, dwell: 180, q: "Alcatraz City Cruises, Pier 33, San Francisco, CA", hrs: R([8.75,15.8333]), note: "Sells out weeks ahead. Buy on the official site only", closeMsg: "The last day ferry has left (about 3:50pm)" },
+    { id: "alcatraz", cat: "sights", name: "Alcatraz Day Tour", where: "Pier 33", blurb: "Ferry, island admission and the cellhouse audio guide.", entry: 47.95, entryLabel: "$47.95 adult. Night Tour $59.65", transitLabel: "Muni F line, or a walk along the waterfront", lat: 37.80665, lng: -122.40455, dwell: 180, q: "Alcatraz City Cruises, Pier 33, San Francisco, CA", hrs: R([8.75,15.8333]), note: "Sells out weeks ahead. Buy on the official site only", closeMsg: "The last day ferry has left (about 3:50pm)" },
     { id: "standard-deviant", cat: "beer", name: "Standard Deviant Brewing", where: "Pier 70, Dogpatch", blurb: "A big industrial taproom with a patio. Reviewers rate it 4.8.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75867, lng: -122.38391, dwell: 45, q: "Standard Deviant Brewing Pier 70, 1070 Maryland St, San Francisco, CA", hrs: [[15,21],[15,21],[15,21],[15,21],[14,22],[12,22],[11,21]] },
     { id: "dogpatch-saloon", cat: "beer", name: "Dogpatch Saloon", where: "3rd St, Dogpatch", blurb: "A historic, dog-friendly neighborhood bar with good cocktails.", entry: 8, entryLabel: "Budget about $8 a drink (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.75806, lng: -122.38857, dwell: 45, q: "Dogpatch Saloon, 2496 3rd St, San Francisco, CA", hrs: [[14,26],[14,26],[14,26],[14,26],[12,26],[11,26],[11,26]] },
     { id: "harmonic", cat: "beer", name: "Harmonic Brewing", where: "Thrive City, next to Chase Center", blurb: "A brewpub with indoor and outdoor seating, right by Chase Center.", entry: 9, entryLabel: "About $9 a pint (estimate)", transitLabel: "Muni $2.75 each way", lat: 37.7688, lng: -122.3869, dwell: 45, q: "Harmonic Brewing Thrive City, 7 Warriors Way, San Francisco, CA", hrs: [N,[15,21],[15,21],[15,21],[15,22],[12,22],[12,20]] },
@@ -646,7 +696,6 @@
     { id: "apple-union-square", cat: "tech", name: "Apple Union Square", where: "Post St, Union Square", blurb: "The flagship store, with a big public plaza and every device to try.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni $2.75 each way, or a 20 min walk", lat: 37.78869, lng: -122.40717, dwell: 30, q: "Apple Union Square, 300 Post St, San Francisco, CA", hrs: [[10,20],[10,20],[10,20],[10,20],[10,20],[10,20],[11,19]] },
     { id: "power-electronics", cat: "tech", name: "Power Electronics", where: "Mission St, Mission", blurb: "A local electronics shop for cables, adapters, amps and keyboards. Handy for DJ and VJ gear.", entry: 0, entryLabel: "Free to browse", transitLabel: "Muni or BART, about $3 each way", lat: 37.75887, lng: -122.4194, dwell: 25, q: "Power Electronics, 2388 Mission St, San Francisco, CA", hrs: [[11,18],[11,18],[11,18],[11,18],[11,18],[11,18],N] },
     { id: "letterman-ldac", cat: "tech", name: "Letterman Digital Arts Center", where: "Presidio", blurb: "The Lucasfilm and ILM campus. The Building B lobby has a free gallery of film props and costumes.", entry: 0, entryLabel: "Free (lobby gallery)", transitLabel: "Muni $2.75 each way", lat: 37.79981, lng: -122.44926, dwell: 30, q: "Letterman Digital Arts Center, 1 Letterman Dr, San Francisco, CA", hrs: null, noHours: "Lobby is open on business days. Hours not confirmed" },
-    { id: "agi-store", cat: "tech", name: "AGI, Inc. Store pop-up", where: "Mission (address on the event page)", blurb: "A pop-up store you shop with smart glasses. Coffee on the house, and you can drop in to cowork.", entry: 0, entryLabel: "Free. Drop in, no RSVP (per the host)", transitLabel: "Muni or BART, about $3 each way", lat: 37.7599, lng: -122.4148, dwell: 30, q: "Mission District, San Francisco, CA", hrs: [N,[9,16],[9,16],N,N,N,N], note: "Tue and Wed only. Pin is the neighborhood, not the address" },
     { id: "sfpl-main", cat: "work", name: "San Francisco Main Library", where: "Larkin St, Civic Center", blurb: "Free, big and quiet, right next to the Asian Art Museum. Reviewers like the bright desks facing the plaza.", entry: 0, entryLabel: "Free. No card needed", transitLabel: "2 min walk", lat: 37.77908, lng: -122.4158, dwell: 90, q: "San Francisco Main Library, 100 Larkin St, San Francisco, CA", hrs: [[9,18],[9,20],[9,20],[9,20],[12,18],[10,18],[12,18]] },
     { id: "anchor-cowork", cat: "work", name: "Anchor Coworking", where: "Market St, near Van Ness", blurb: "Open 24 hours, with fast internet and phone booths. A reviewer paid $25 for a day pass.", entry: 25, entryLabel: "Day pass about $25 per a reviewer (confirm)", transitLabel: "8 min walk", lat: 37.77503, lng: -122.41999, dwell: 120, q: "Anchor Coworking, 1540 Market St, San Francisco, CA", hrs: R(ALL) },
     { id: "lans-cowork", cat: "work", name: "Coworking SF by LANS", where: "Polk St, Polk Gulch", blurb: "Desks with monitors and power, plus phone booths. You book through the LANS app, and reviewers say later-in-the-day bookings cost less.", entry: null, entryLabel: "Day pass: check the LANS app", transitLabel: "Muni $2.75, or a 15 min walk", lat: 37.7911, lng: -122.42107, dwell: 120, q: "Coworking SF by LANS, 1541 Polk St, San Francisco, CA", hrs: R([5,24]), note: "One reviewer says people can walk in, so keep your bag with you" },
@@ -987,15 +1036,15 @@
 
   /* ---------- state changes ---------- */
   function toggle(id) {
-    var i = state.route.indexOf(id), firstPick = i < 0 && !state.route.length && !state.dest;
-    if (i >= 0) state.route.splice(i, 1); else state.route.push(id);
+    var i = state.route.indexOf(id);
+    if (i >= 0) state.route.splice(i, 1); else { state.route.push(id); maybeLoadGoogle(); }
     refresh();
-    if (firstPick) {
-      showUndo("Heading to " + byId[id].name + "? I can fill the way there.", function () { setDest(id); setView("route"); }, "Build route", 9000);
-    }
+    var n = state.route.length;
+    showToast((i >= 0 ? "Removed " : "Added ") + byId[id].name + (n ? " \u00b7 " + n + (n === 1 ? " stop" : " stops") : ""));
   }
   function setView(v) {
     state.view = v;
+    if (v === "route") maybeLoadGoogle();
     document.getElementById("tabStops").setAttribute("aria-pressed", v === "stops" ? "true" : "false");
     document.getElementById("tabRoute").setAttribute("aria-pressed", v === "route" ? "true" : "false");
     main.hidden = v !== "stops";
@@ -1015,17 +1064,8 @@
     syncCards();
     var items = state.route.map(function (id) { return byId[id]; });
     var sim = simulate(items, cfgObj());
-    var total = Math.round(sim.entry + sim.transit);
-    document.getElementById("recAmt").textContent = "$" + total;
-    var s = document.getElementById("sumText");
-    if (!items.length) { s.innerHTML = "<strong>Nothing added yet</strong>"; }
-    else {
-      var t = "<strong>" + items.length + (items.length === 1 ? " stop" : " stops") + ", about $" + total + "</strong>";
-      if (sim.tbd) t += " plus covers";
-      s.innerHTML = t;
-    }
-    document.getElementById("clear").disabled = !items.length;
-    document.getElementById("tabRoute").textContent = items.length ? "Map and route (" + items.length + ")" : "Map and route";
+    document.getElementById("clear").hidden = !items.length;
+    document.getElementById("tabRoute").textContent = items.length ? "Route (" + items.length + ")" : "Route";
     var dayName = DAYS_LONG[state.cfg.day] + (state.cfg.day === TODAY ? " (today)" : "");
     document.getElementById("hoursHint").textContent = "Hours shown for " + dayName + ".";
     if (state.view === "route") renderRoute(items, sim);
@@ -1075,7 +1115,7 @@
     return false;
   }
   function copyText(t) {
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { showToast("Plan copied"); }, function () { showToast("Couldn't copy the plan"); });
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { showToast("Link copied"); }, function () { showToast("Couldn't copy the link"); });
     else showToast("Sharing isn't available here");
   }
   function sharePlan(items, sim, mapsUrl) {
@@ -1126,10 +1166,12 @@
 
   function updateKeyBanner() {
     var haveKey = !!currentKey(), tapMode = haveKey && OPTS.googleMode === "tap" && !SAFE;
-    document.getElementById("keyBox").hidden = gm.ready || gm.loading || (tapMode && !gm.failed);
+    document.getElementById("keyBox").hidden = !SETUP || gm.ready || gm.loading || (tapMode && !gm.failed);
+    var mn = document.getElementById("mapNote");
+    if (mn) { mn.hidden = !(haveKey && gm.failed && !SETUP); mn.textContent = gm.offline ? "You're offline, so this is the simple map. Times are estimates." : "Showing the simple map. Times are estimates."; }
     var tb = document.getElementById("gmTap"); if (tb) tb.hidden = !(tapMode && !gm.ready && !gm.loading && !gm.failed);
     var msg = document.getElementById("keyMsg"); msg.hidden = !gm.failed; msg.textContent = gm.failed || "";
-    document.getElementById("resetKey").hidden = !storedKey();
+    document.getElementById("resetKey").hidden = !SETUP || !storedKey();
   }
   function teardownGoogle() {
     gm.ready = false; gm.loading = false;
@@ -1165,7 +1207,10 @@
   function loadGoogle(key) {
     if (!key || gm.loading || gm.ready) return;
     gm.loading = true; gm.failed = "";
-    window.__gmInit = function () { gm.ready = true; gm.loading = false; makeMarkerClass(); updateKeyBanner(); refresh(); };
+    window.__gmInit = function () {
+      var libs = google.maps.importLibrary ? Promise.all(["maps", "marker", "routes"].map(function (n) { return google.maps.importLibrary(n).catch(function () {}); })) : Promise.resolve();
+      libs.then(function () { gm.ready = true; gm.loading = false; makeMarkerClass(); updateKeyBanner(); refresh(); });
+    };
     // Google reports the precise reason only in the console, so capture it to show a clear message.
     if (!gm.errHooked) {
       gm.errHooked = true;
@@ -1200,12 +1245,16 @@
       }, 80);
     };
     var sc = document.createElement("script");
-    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__gmInit&v=weekly&libraries=routes";
+    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=__gmInit&v=weekly&libraries=routes&loading=async";
     sc.async = true;
-    sc.onerror = function () { gm.loading = false; gm.failed = "Couldn't load Google Maps. Check your connection and try again."; updateKeyBanner(); };
+    sc.onerror = function () { gm.loading = false; gm.offline = navigator.onLine === false; gm.failed = "Couldn't load Google Maps. Check your connection and try again."; updateKeyBanner(); refresh(); };
     document.head.appendChild(sc);
+    // On a slow connection, show the built-in map instead of a spinner; Google swaps in when it arrives.
+    gm.slowT = setTimeout(function () { if (gm.loading) { gm.slow = true; refresh(); } }, 6000);
     updateKeyBanner();
   }
+  // Google Maps is about 1 MB, so load it only once someone is heading to the map.
+  function maybeLoadGoogle() { var k = currentKey(); if (k && !SAFE && OPTS.googleMode !== "tap") loadGoogle(k); }
 
   function gmEnsureMap() {
     if (gm.map) return gm.map;
@@ -1345,9 +1394,14 @@
     }
     ITEMS.forEach(function (it) { if (state.route.indexOf(it.id) < 0 && (state.mapFilter === "all" || it.cat === state.mapFilter)) mk("dot", "", it, it.name, function () { onMapTap("add", it.id); }, null, it.id); });
     var isMe = String(st.id).indexOf("me:") === 0; mk("start" + (isMe ? " me" : ""), isMe ? "" : "S", st, isMe ? "Your location" : "Start: " + st.label, function () { onMapTap("start"); });
+    var placed = [];
     sim.rows.forEach(function (r, i) {
       var bad = r.issues.some(function (x) { return x.hard; });
       mk("pin" + (bad ? " bad" : ""), String(i + 1), r.it, r.it.name, function () { onMapTap("go", r.it.id); }, r.it.id);
+      // Stops a few doors apart would hide each other, so fan them out a little.
+      var near = placed.filter(function (p) { return hav(p, r.it) < 0.03; }).length;
+      if (near) { var pe = gm.overlays[gm.overlays.length - 1].el; pe.style.marginLeft = (near * 22) + "px"; pe.style.marginTop = (-near * 10) + "px"; }
+      placed.push(r.it);
     });
     if (state.notes) NOTES.forEach(function (n) { mk("note " + n.tone, TONE_GLYPH[n.tone], n, n.title, function () { onMapTap("note", n.id); }); });
     gmHeatRender();
@@ -1535,14 +1589,14 @@
         var url = HEAT_BASES[bi] + q;
         return fetch(url).then(function (r) {
           if (r.status === 429 && retry < 2) {
-            console.warn("[reports] rate limited by " + HEAT_BASES[bi] + ", retrying");
+            (window.__dbgLog || function () {})("[reports] rate limited by " + HEAT_BASES[bi] + ", retrying");
             return new Promise(function (res) { setTimeout(res, 900 * (retry + 1)); }).then(function () { return attempt(bi, retry + 1); });
           }
           if (!r.ok) throw new Error("HTTP " + r.status + " from " + HEAT_BASES[bi]);
           heatBase = bi;
           return r.json();
         }).catch(function (e) {
-          console.warn("[reports] " + HEAT_BASES[bi] + " failed: " + ((e && e.message) || e));
+          (window.__dbgLog || function () {})("[reports] " + HEAT_BASES[bi] + " failed: " + ((e && e.message) || e));
           if (bi + 1 < HEAT_BASES.length) return attempt(bi + 1, 0);
           throw e;
         });
@@ -1570,7 +1624,7 @@
       else buildHeat();
       renderHeatUi(); refresh();
     }).catch(function (e) {
-      console.warn("[reports] gave up: " + ((e && e.message) || e));
+      (window.__dbgLog || function () {})("[reports] gave up: " + ((e && e.message) || e));
       heat.loading = false; heat.error = "Couldn't load the police data. Slide the switch off and on to retry.";
       renderHeatUi(); refresh();
     });
@@ -1792,7 +1846,7 @@
   }
   function setupAlong() {
     var sel = document.getElementById("destSel");
-    var none = el("option", "", "None. Pick a place to end at"); none.value = ""; sel.appendChild(none);
+    var none = el("option", "", "Wherever the route ends"); none.value = ""; sel.appendChild(none);
     CATS.forEach(function (c) {
       var g = el("optgroup"); g.label = c.label;
       ITEMS.filter(function (i) { return i.cat === c.id; }).sort(function (a, b) { return a.name < b.name ? -1 : 1; }).forEach(function (i) { var o = el("option", "", i.name); o.value = i.id; g.appendChild(o); });
@@ -2116,10 +2170,13 @@
     var empty = document.getElementById("routeEmpty"), body = document.getElementById("routeBody");
     empty.hidden = items.length > 0; body.hidden = false;
     document.getElementById("routeOnly").hidden = !items.length;
+    document.getElementById("totals").hidden = !items.length;
     var cfg = cfgObj();
 
     updateKeyBanner();
-    if (gm.ready) gmRender(sim, items); else drawMap(sim, items);
+    if (gm.ready) gmRender(sim, items);
+    else if (gm.loading && !gm.slow) { var mb = document.getElementById("mapBox"); if (!mb.querySelector(".maploading")) mb.innerHTML = '<div class="maploading" role="status"><span class="spin" aria-hidden="true"></span>Loading map</div>'; }
+    else drawMap(sim, items);
     if (!items.length) return;
 
     // compare
@@ -2202,20 +2259,27 @@
 
     // totals
     var tot = document.getElementById("totals"); tot.innerHTML = "";
-    tot.appendChild(el("p", "big", fmtDur(sim.totalMin) + ", ends " + fmtTime(sim.endMin)));
-    tot.appendChild(el("p", "", "Moving: " + fmtDur(sim.walkMin + sim.muniMin) + " (walking " + fmtDur(sim.walkMin) + ", Muni " + fmtDur(sim.muniMin) + ")" + (sim.wait ? ". Waiting for openings: " + fmtDur(sim.wait) : "") + "."));
-    tot.appendChild(el("p", "", "Transit " + money(sim.transit) + ". Entry and drinks about " + money(sim.entry) + (sim.tbd ? " plus covers" : "") + "."));
+    var miles = sim.rows.reduce(function (m, r) { return m + r.leg.mi; }, 0) + (sim.back ? sim.back.leg.mi : 0);
+    var stats = el("div", "stats");
+    function stat(v, l) { var d = el("div", "stat"); d.appendChild(el("span", "v", v)); d.appendChild(el("span", "l", l)); stats.appendChild(d); }
+    stat(fmtDur(sim.totalMin), "total, ends " + fmtTime(sim.endMin));
+    stat(miles.toFixed(1) + " mi", "walk " + fmtDur(sim.walkMin) + (sim.muniMin ? ", Muni " + fmtDur(sim.muniMin) : ""));
+    stat("$" + Math.round(sim.entry + sim.transit), sim.tbd ? "est., plus covers" : "est. spend");
+    tot.appendChild(stats);
+    var hardN = sim.rows.filter(function (r) { return r.issues.some(function (x) { return x.hard; }); }).length;
+    if (hardN) tot.appendChild(el("p", "issue", hardN + (hardN === 1 ? " stop is" : " stops are") + " closed when you'd arrive. Try another order, start time or day."));
+    else if (sim.wait) tot.appendChild(el("p", "fine", "Includes " + fmtDur(sim.wait) + " waiting for places to open."));
     var names = items.map(function (x) { return x.q || (x.name + ", San Francisco, CA"); });
     var wp = names.slice(0, names.length - 1), dest = cfg.loop ? startObj().q : names[names.length - 1];
     if (cfg.loop) wp = names.slice();
     var tooMany = wp.length > 9; if (tooMany) wp = wp.slice(0, 9);
     var anyMuni = sim.muniMin > 0;
     var url = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(startObj().q) + "&destination=" + encodeURIComponent(dest) + (wp.length ? "&waypoints=" + encodeURIComponent(wp.join("|")) : "") + "&travelmode=" + (anyMuni ? "transit" : "walking");
-    var a = el("a", "btn row2", "Open in Google Maps"); a.href = url; a.target = "_blank"; a.rel = "noopener";
-    var shBtn = el("button", "btn ghost", "Share plan"); shBtn.type = "button";
+    var shBtn = el("button", "btn", "Share route"); shBtn.type = "button";
     shBtn.addEventListener("click", function () { sharePlan(items, sim, url); });
-    var wrap = el("p"); wrap.appendChild(a); wrap.appendChild(shBtn); tot.appendChild(wrap);
-    tot.appendChild(el("p", "fine", "Times are estimates: walking at 3 mph, street distance at 1.3 times straight-line, Muni with an 8 minute wait. Muni charges once per 90 minutes. Arrival times assume a typical visit at each stop. When the Google map is on, leg times come from Google Directions. Google Maps also shows live departures." + (tooMany ? " Google Maps takes at most 9 waypoints, so the link stops early." : "")));
+    var a = el("a", "btn ghost", "Open in Google Maps"); a.href = url; a.target = "_blank"; a.rel = "noopener";
+    var wrap = el("div", "acts"); wrap.appendChild(shBtn); wrap.appendChild(a); tot.appendChild(wrap);
+    tot.appendChild(el("p", "fine", (gm.ready ? "Leg times from Google. " : "Times are estimates: walking 3 mph, Muni with an 8 minute wait. ") + "Muni is " + money(FARE) + " per 90 minutes. Visit lengths are typical, not fixed." + (tooMany ? " Google Maps takes at most 9 waypoints, so its link stops early." : "")));
   }
 
   function moveStop(i, d, focusId) {
@@ -2377,21 +2441,29 @@
       e.preventDefault(); try { localStorage.removeItem("sfdg:gmkey"); } catch (x) {} location.reload();
     });
     document.getElementById("goStops").addEventListener("click", function () { setView("stops"); });
+    document.getElementById("goSample").addEventListener("click", function () { loadSample(); });
   }
 
   function buildDayChips(id) {
     var wrap = document.getElementById(id); wrap.innerHTML = "";
     DAYS.forEach(function (d, i) {
       var b = el("button", "chip", i === TODAY ? "Today" : d); b.type = "button";
-      b.setAttribute("aria-label", DAYS_LONG[i] + (i === TODAY ? " (today)" : ""));
+      if (i === TODAY) b.setAttribute("aria-label", "Today, " + DAYS_LONG[i]);
       b.setAttribute("aria-pressed", i === state.cfg.day ? "true" : "false");
       b.addEventListener("click", function () { setDay(i); });
       wrap.appendChild(b);
     });
   }
+  function buildDaySel() {
+    var sel = document.getElementById("daySel");
+    DAYS_LONG.forEach(function (d, i) { var o = el("option", "", i === TODAY ? "Today" : d); o.value = String(i); sel.appendChild(o); });
+    sel.addEventListener("change", function () { setDay(parseInt(sel.value, 10)); });
+    syncDaySel();
+  }
+  function syncDaySel() { var sel = document.getElementById("daySel"); if (sel) sel.value = String(state.cfg.day); }
   function setDay(i) {
     state.cfg.day = i; cmpCache.key = "";
-    buildDayChips("dayChips"); buildDayChips("dayChips2");
+    buildDayChips("dayChips2"); syncDaySel();
     refresh();
   }
   function syncSettingsUI() {
@@ -2405,6 +2477,19 @@
     document.getElementById("loopChk").checked = !!state.cfg.loop;
   }
 
+  // A ready-made route for a quick first look: afternoon stops by day, bars from 5pm.
+  var SAMPLE_DAY = ["dark-entries", "saigon-sandwich", "grooves", "hayz-dog"], SAMPLE_NIGHT = ["brass-tacks", "zeitgeist", "noc-noc", "molotovs"];
+  function loadSample() {
+    var snap = state.route.slice(), night = parseTime(state.cfg.startTime) >= 17 * 60;
+    var est = {}, cfg = cfgObj(); Object.keys(cfg).forEach(function (k) { est[k] = cfg[k]; }); est.estOnly = true;
+    state.dest = null; state.auto = [];
+    state.route = bestOrder((night ? SAMPLE_NIGHT : SAMPLE_DAY).map(function (id) { return byId[id]; }), est, "time").map(function (x) { return x.id; });
+    setView("route");
+    if (snap.length) showUndo("Loaded a sample route", function () { state.route = snap; refresh(); });
+    else showToast("Sample route loaded");
+  }
+  document.getElementById("sampleBtn").addEventListener("click", loadSample);
+  document.getElementById("browseBtn").addEventListener("click", function () { setView("stops"); });
   document.getElementById("tabStops").addEventListener("click", function () { setView("stops"); });
   document.getElementById("tabRoute").addEventListener("click", function () { setView("route"); });
   document.getElementById("clear").addEventListener("click", function () {
@@ -2422,13 +2507,18 @@
   var fromLink = restore();
   renderNotes();
   fsEl.hidden = true; document.body.style.overflow = "";
-  buildChips(); buildMapChips(); buildStops(); setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd(); setupAlong();
-  buildDayChips("dayChips"); buildDayChips("dayChips2"); syncSettingsUI();
+  buildChips(); buildMapChips(); buildStops(); document.getElementById("afterList").hidden = false; setBarH(); window.addEventListener("resize", setBarH); setupSettings(); setupFs(); setupDrag(); setupPd(); setupAlong();
+  buildDayChips("dayChips2"); buildDaySel(); syncSettingsUI();
+  document.getElementById("stopCount").textContent = ITEMS.length;
   updateKeyBanner();
-  var k0 = currentKey(); if (k0 && !SAFE && OPTS.googleMode !== "tap") loadGoogle(k0);
+  if (state.route.length) maybeLoadGoogle();
   refresh();
   if (fromLink && state.route.length) setView("route");
-  if (SAFE) { showToast("Safe mode: Google map, location and saved plans are off"); } else locateMe();
+  if (SAFE) { showToast("Safe mode: Google map, location and saved plans are off"); }
+  else if (navigator.permissions && navigator.permissions.query) {
+    // Ask for location only when someone picks My current location, but use it right away if it is already allowed.
+    navigator.permissions.query({ name: "geolocation" }).then(function (r) { if (r.state === "granted") locateMe(); }, function () {});
+  }
 
   window.__sfTest = { generateAlong: generateAlong, setDest: setDest, locState: function () { return locState; }, myLoc: function () { return myLoc; }, NOTES: NOTES, heatLevelAt: heatLevelAt, legHeatLevel: legHeatLevel, heat: heat, gm: gm, legCache: legCache, statusText: statusText, dr: dr, fs: fs, fsOpen: fsOpen, simulate: simulate, bestOrder: bestOrder, cfgObj: cfgObj, ITEMS: ITEMS, state: state, toggle: toggle, setView: setView };
 })();
