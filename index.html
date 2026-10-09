@@ -447,6 +447,15 @@
     .landing-map { max-height: 72vh; }
   }
 
+  .notepop { position: fixed; z-index: 85; width: min(320px, calc(100vw - 24px)); background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 22px; padding: 14px 16px 12px; box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.35); }
+  .notepop h4 { font-family: var(--display); font-size: 1rem; line-height: 1.25; margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
+  .notepop h4 .ndot { transform: translateY(-1px); }
+  .notepop p { margin: 0 0 8px; font-size: 0.9rem; }
+  .notepop .nsrc { margin: 0 0 6px; }
+  .notepop .npfine { color: var(--muted); font-size: 0.78rem; margin: 0; }
+  #mapBox [data-note], .gmk.note { cursor: pointer; }
+  .gmk.note:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
   button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
@@ -458,7 +467,7 @@
       <p class="brand"><img class="mark" src="assets/icon.svg" alt="" width="24" height="24">SF Day Guide</p>
       <h1 id="landingTitle">Get to know San Francisco like a local.</h1>
       <p class="lede">Record shops, taquerias, murals and late bars, planned into one easy day on foot and Muni.</p>
-      <button class="btn cta-big" type="button" id="enterBtn">Explore the city like a local<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="btn cta-big" type="button" id="enterBtn">Plan my day<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <p class="landing-note"><span id="stopCount">80+</span> hand-picked stops · Opening hours checked · Free, no sign-up</p>
     </div>
     <div class="landing-art">
@@ -547,12 +556,6 @@
         <div class="cmp" id="cmp"></div>
       </div>
 
-      <div class="notebox" id="notesBox" hidden>
-        <h3>Local notes</h3>
-        <p class="intro">Summaries of recent news, local data sites and forum threads, written in early Oct 2026. Not live, and forum posts are anecdotal. Conditions change block by block.</p>
-        <div id="notesList"></div>
-      </div>
-
       <details class="set">
         <summary>Route settings</summary>
         <div class="field"><span class="lbl" id="dayLbl2">Day</span><div class="chips" id="dayChips2" role="group" aria-labelledby="dayLbl2"></div></div>
@@ -601,6 +604,7 @@
 
 <div class="errbar" id="errBar" role="alert" hidden><span id="errMsg"></span><button type="button" id="errReload">Reload</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="notepop" id="notePop" role="dialog" aria-label="Local note" hidden></div>
 <div class="draghint" id="dragHint" aria-hidden="true"></div>
 <div class="undo" id="undo" role="status" aria-live="polite"><span id="undoText"></span><button type="button" id="undoBtn">Undo</button></div>
 <div class="mapfs" id="mapFs" role="dialog" aria-modal="true" aria-label="Interactive route map" hidden>
@@ -1500,7 +1504,7 @@
 
   function onMapTap(kind, id) {
     if (kind === "note") {
-      if (fs.open) { fs.sheet = { type: "note", id: id }; refresh(); } else openNoteCard(id);
+      if (fs.open) { fs.sheet = { type: "note", id: id }; refresh(); }
       return;
     }
     if (fs.open) {
@@ -1552,7 +1556,11 @@
       if (near) { var pe = gm.overlays[gm.overlays.length - 1].el; pe.style.marginLeft = (near * 22) + "px"; pe.style.marginTop = (-near * 10) + "px"; }
       placed.push(r.it);
     });
-    if (state.notes) NOTES.forEach(function (n) { mk("note " + n.tone, TONE_GLYPH[n.tone], n, n.title, function () { onMapTap("note", n.id); }); });
+    if (state.notes) NOTES.forEach(function (n) {
+      mk("note " + n.tone, TONE_GLYPH[n.tone], n, "", function () { if (fs.open) onMapTap("note", n.id); });
+      var ne = gm.overlays[gm.overlays.length - 1].el; ne.setAttribute("aria-label", n.title); ne.setAttribute("role", "button"); ne.tabIndex = 0;
+      if (!fs.open) { bindNoteHover(ne, n.id); ne.addEventListener("focus", function () { showNotePop(n.id, ne, false); }); ne.addEventListener("blur", function () { hideNotePop(false); }); }
+    });
     gmHeatRender();
     var fk = state.route.join(",") + "|" + state.cfg.start;
     if (gm.fitKey !== fk) { gm.fitKey = fk; gmFit(false); }
@@ -1905,23 +1913,49 @@
     return wrap;
   }
   function renderNotes() {
-    var box = document.getElementById("notesBox"), list = document.getElementById("notesList");
-    box.hidden = !state.notes;
     ["notesBtn", "fsNotes"].forEach(function (id) { var b = document.getElementById(id); if (b) b.setAttribute("aria-pressed", state.notes ? "true" : "false"); });
-    if (!state.notes || list.childNodes.length) return;
-    NOTES.forEach(function (n) {
-      var c = el("div", "ncard"); c.id = "note-" + n.id;
-      var h = el("h4"); h.appendChild(el("i", "ndot " + n.tone)); h.appendChild(document.createTextNode(n.title));
-      c.appendChild(h); c.appendChild(el("p", "", n.text)); c.appendChild(noteSources(n));
-      list.appendChild(c);
-    });
+    if (!state.notes) hideNotePop(true);
   }
   function setNotes(on) { state.notes = on; renderNotes(); refresh(); }
-  function openNoteCard(id) {
-    if (!state.notes) { state.notes = true; renderNotes(); }
-    var c = document.getElementById("note-" + id);
-    if (c) { if (c.scrollIntoView) c.scrollIntoView({ behavior: "smooth", block: "center" }); c.classList.add("flash"); setTimeout(function () { c.classList.remove("flash"); }, 1600); }
+  // A note shows as a small card beside its map marker: on hover with a mouse, or tapped on a phone.
+  var np = { id: null, pinned: false, t: 0 };
+  function noteById(id) { for (var i = 0; i < NOTES.length; i++) if (NOTES[i].id === id) return NOTES[i]; return null; }
+  function showNotePop(id, anchor, pinned) {
+    var n = noteById(id), pop = document.getElementById("notePop"); if (!n || !anchor) return;
+    clearTimeout(np.t);
+    if (np.id !== id) {
+      pop.innerHTML = "";
+      var h = el("h4"); h.appendChild(el("i", "ndot " + n.tone)); h.appendChild(document.createTextNode(n.title));
+      pop.appendChild(h); pop.appendChild(el("p", "", n.text)); pop.appendChild(noteSources(n));
+      pop.appendChild(el("p", "npfine", "From news and forums, early Oct 2026. Not live."));
+    }
+    np.id = id; np.pinned = np.pinned && np.id === id ? true : !!pinned;
+    pop.hidden = false;
+    var r = anchor.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    var x = Math.min(Math.max(12, r.left + r.width / 2 - pw / 2), vw - pw - 12);
+    var bar = document.querySelector(".bar"), top = (bar && !fs.open ? bar.getBoundingClientRect().bottom : 0) + 8;
+    var y = r.top - ph - 10; if (y < top) y = Math.min(r.bottom + 10, vh - ph - 12);
+    pop.style.left = x + "px"; pop.style.top = y + "px";
   }
+  function hideNotePop(now) {
+    clearTimeout(np.t);
+    function go() { document.getElementById("notePop").hidden = true; np.id = null; np.pinned = false; }
+    if (now) go(); else np.t = setTimeout(function () { if (!np.pinned) go(); }, 180);
+  }
+  function bindNoteHover(node, id) {
+    node.addEventListener("mouseenter", function () { if (!fs.open) showNotePop(id, node, false); });
+    node.addEventListener("mouseleave", function () { hideNotePop(false); });
+    node.addEventListener("click", function (e) { if (fs.open) return; e.stopPropagation(); if (np.id === id && np.pinned) hideNotePop(true); else showNotePop(id, node, true); });
+  }
+  (function () {
+    var pop = document.getElementById("notePop");
+    pop.addEventListener("mouseenter", function () { clearTimeout(np.t); });
+    pop.addEventListener("mouseleave", function () { hideNotePop(false); });
+    document.addEventListener("click", function (e) { if (!pop.hidden && !pop.contains(e.target)) hideNotePop(true); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !pop.hidden) hideNotePop(true); });
+    window.addEventListener("scroll", function () { if (!pop.hidden) hideNotePop(true); }, { passive: true });
+    window.addEventListener("resize", function () { if (!pop.hidden) hideNotePop(true); });
+  })();
 
   /* ---------- pick a last stop, then fill the way there ---------- */
   function segProj(S, D, P) {
@@ -2041,7 +2075,7 @@
       s += '<g data-add="' + it.id + '" style="cursor:pointer"><circle cx="' + X(it.lng).toFixed(1) + '" cy="' + Y(it.lat).toFixed(1) + '" r="' + (14 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + X(it.lng).toFixed(1) + '" cy="' + Y(it.lat).toFixed(1) + '" r="' + (3.6 * px).toFixed(2) + '" fill="var(--muted)" opacity="0.7"/><title>' + esc(it.name) + "</title></g>";
     });
     if (state.notes) NOTES.forEach(function (n) {
-      s += '<g data-note="' + n.id + '" style="cursor:pointer"><circle cx="' + X(n.lng).toFixed(1) + '" cy="' + Y(n.lat).toFixed(1) + '" r="' + (18 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + X(n.lng).toFixed(1) + '" cy="' + Y(n.lat).toFixed(1) + '" r="' + (10 * px).toFixed(1) + '" fill="' + TONE_COLOR[n.tone] + '" stroke="#fff" stroke-width="' + (2 * px).toFixed(1) + '"/><text x="' + X(n.lng).toFixed(1) + '" y="' + (Y(n.lat) + 4 * px).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * px).toFixed(1) + '" font-weight="800" fill="' + (n.tone === "watch" ? "#11151C" : "#fff") + '" font-family="var(--display)">' + TONE_GLYPH[n.tone] + '</text><title>' + esc(n.title) + '</title></g>';
+      s += '<g data-note="' + n.id + '" style="cursor:pointer"><circle cx="' + X(n.lng).toFixed(1) + '" cy="' + Y(n.lat).toFixed(1) + '" r="' + (18 * px).toFixed(1) + '" fill="transparent"/><circle cx="' + X(n.lng).toFixed(1) + '" cy="' + Y(n.lat).toFixed(1) + '" r="' + (10 * px).toFixed(1) + '" fill="' + TONE_COLOR[n.tone] + '" stroke="#fff" stroke-width="' + (2 * px).toFixed(1) + '"/><text x="' + X(n.lng).toFixed(1) + '" y="' + (Y(n.lat) + 4 * px).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * px).toFixed(1) + '" font-weight="800" fill="' + (n.tone === "watch" ? "#11151C" : "#fff") + '" font-family="var(--display)">' + TONE_GLYPH[n.tone] + '</text></g>';
     });
     if (String(st.id).indexOf("me:") === 0) {
       s += '<g data-start="1" style="cursor:pointer"><circle cx="' + pts[0].x.toFixed(1) + '" cy="' + pts[0].y.toFixed(1) + '" r="' + (14 * px).toFixed(1) + '" fill="#2B7FFF" fill-opacity="0.2"/><circle cx="' + pts[0].x.toFixed(1) + '" cy="' + pts[0].y.toFixed(1) + '" r="' + (7 * px).toFixed(1) + '" fill="#2B7FFF" stroke="#fff" stroke-width="' + (2.5 * px).toFixed(1) + '"/><title>Your location</title></g>';
@@ -2060,7 +2094,7 @@
     var vb = fitVb(items, 1, state.zoom === "city");
     box.innerHTML = svgString(sim, items, vb, box.clientWidth || 360);
     Array.prototype.forEach.call(box.querySelectorAll("[data-add]"), function (g) { g.addEventListener("click", function () { mapAdd(g.getAttribute("data-add")); }); });
-    Array.prototype.forEach.call(box.querySelectorAll("[data-note]"), function (g) { g.addEventListener("click", function () { openNoteCard(g.getAttribute("data-note")); }); });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-note]"), function (g) { bindNoteHover(g, g.getAttribute("data-note")); });
     Array.prototype.forEach.call(box.querySelectorAll("[data-go]"), function (g) {
       bindHold(g, g.getAttribute("data-go"), function () {
         var row = document.getElementById("row-" + g.getAttribute("data-go"));
@@ -2159,7 +2193,7 @@
 
   function fsOpen() {
     fs.open = true; fs.vb = null; fs.sheet = null; fs.ptrs = {}; fs.g = null;
-    fsEl.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("fs-open");
+    fsEl.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("fs-open"); hideNotePop(true);
     if (gm.ready && gm.map) { fsEl.classList.add("google"); gmMoveTo(document.getElementById("fsGoogle"), true); fsSheetRender(simulate(fsItems(), cfgObj())); }
     else { fsEl.classList.remove("google"); fsRender(); }
     var d = document.getElementById("fsDone"); if (d.focus) d.focus();
