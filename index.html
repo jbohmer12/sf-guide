@@ -264,6 +264,7 @@
 
   /* Undo bar */
   .undo { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 16px; font-size: 0.92rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90; max-width: 90vw; display: flex; align-items: center; gap: 16px; }
+  .undo, .toast { width: max-content; max-width: calc(100vw - 32px); }
   .undo.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
   .undo button { font: inherit; font-weight: 700; color: var(--bg); background: none; border: 0; text-decoration: underline; padding: 6px 2px; cursor: pointer; }
 
@@ -1039,8 +1040,25 @@
     var i = state.route.indexOf(id);
     if (i >= 0) state.route.splice(i, 1); else { state.route.push(id); maybeLoadGoogle(); }
     refresh();
+    if (i < 0 && fillToFar(id)) return;
     var n = state.route.length;
     showToast((i >= 0 ? "Removed " : "Added ") + byId[id].name + (n ? " \u00b7 " + n + (n === 1 ? " stop" : " stops") : ""));
+  }
+  // Picking a far-away place early on: make it the last stop and fill the way there, with Undo.
+  var FAR_MI = 1.2;   // straight-line, about a 30 minute walk
+  function fillToFar(id) {
+    var it = byId[id];
+    if (state.dest || hav(startObj(), it) < FAR_MI) return false;
+    if (state.route.filter(function (x) { return x !== id; }).length > 1) return false;
+    var snap = { route: state.route.slice(), auto: state.auto.slice() };
+    state.dest = id;
+    var res = generateAlong(false);
+    if (!res.added) { state.dest = null; state.route = snap.route; state.auto = snap.auto; refresh(); return false; }
+    refresh(); renderAlongUi(res.note);
+    showUndo("Added " + it.name + " plus " + res.added + (res.added === 1 ? " stop" : " stops") + " on the way", function () {
+      state.dest = null; state.route = snap.route; state.auto = snap.auto; refresh(); renderAlongUi("");
+    }, "Undo", 8000);
+    return true;
   }
   function setView(v) {
     state.view = v;
